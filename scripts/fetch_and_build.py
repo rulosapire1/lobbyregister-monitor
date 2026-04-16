@@ -354,7 +354,7 @@ def generate_html(statements, generated_at):
 
     # Filterlist für Seitenleiste
     filter_items = "".join(
-        f'<li data-v="{v.replace(chr(34), &quot;)}">'
+        f'<li data-v="{v.replace(chr(34), chr(39))}">'
         f'<span>{v}</span><span class="filter-count">{c}</span></li>'
         for v, c in sorted(vorhaben_counts.items(), key=lambda x: -x[1])
     )

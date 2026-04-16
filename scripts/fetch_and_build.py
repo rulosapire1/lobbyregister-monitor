@@ -1,7 +1,10 @@
 """
 fetch_and_build.py
 ==================
-Ruft Stellungnahmen vom Lobbyregister ab (V2 API) und generiert die HTML-Seite.
+Ruft Stellungnahmen vom Lobbyregister ab und generiert die HTML-Seite.
+
+Strategie: sucheDetailJson-Endpunkt mit Paginierung.
+Dieser Endpunkt gibt vollständige Registereinträge inkl. Stellungnahmen zurück.
 """
 
 import json
@@ -13,12 +16,12 @@ from pathlib import Path
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
 
-API_BASE = "https://api.lobbyregister.bundestag.de/rest/v2"
-API_KEY = os.environ.get("LOBBYREGISTER_API_KEY", "5bHB2zrUuHR6YdPoZygQhWfg2CBrjUOi")
+BASE_URL = "https://www.lobbyregister.bundestag.de/sucheDetailJson"
 SITE_URL = "https://bmwe-iiia4.github.io/lobbyregister-monitor"
 START_DATE = date(2026, 1, 1)
+PAGE_SIZE = 100
 
-# Gesuchte Empfänger (shortTitle aus API)
+# Gesuchte Empfänger-Kurzzeichen
 TARGET_RECIPIENTS = {"BMWE", "Bundestag", "BT"}
 
 # Gesuchte Themenfeld-Codes
@@ -38,162 +41,127 @@ FIELD_PRIORITY = {
     "FOI_ECONOMY_COMPETITION_LAW": 3, "FOI_POLITICAL_PARTIES": 3, "FOI_OTHER": 3,
 }
 
+FIELD_LABELS = {
+    "FOI_ENERGY": "Energie", "FOI_ENERGY_RENEWABLE": "Erneuerbare Energie",
+    "FOI_ENERGY_ELECTRICITY": "Strom", "FOI_ENERGY_GAS": "Gas",
+    "FOI_ENERGY_HYDROGEN": "Wasserstoff", "FOI_ENVIRONMENT_CLIMATE": "Klimaschutz",
+    "FOI_EU_DOMESTIC_MARKET": "EU-Binnenmarkt", "FOI_EU_LAWS": "EU-Gesetzgebung",
+    "FOI_BUNDESTAG": "Bundestag", "FOI_ECONOMY_COMPETITION_LAW": "Wettbewerbsrecht",
+    "FOI_POLITICAL_PARTIES": "Politisches Leben, Parteien",
+    "FOI_OTHER": "Sonstige Interessenbereiche",
+}
+
 
 # ── API-Abfrage ────────────────────────────────────────────────────────────────
 
-def fetch_all_entries():
-    """Ruft alle Registereinträge über die V2-API ab (paginiert)."""
-    headers = {"Authorization": f"ApiKey {API_KEY}"}
-    all_entries = []
-    cursor = None
+def fetch_all_statements():
+    """
+    Ruft alle Registereinträge paginiert ab und extrahiert Stellungnahmen.
+    sucheDetailJson gibt vollständige Einträge inkl. statements zurück.
+    """
+    all_statements = []
     page = 0
+    total_entries = 0
 
-    print("Rufe Registereinträge vom Lobbyregister ab (V2 API)...")
+    print("Rufe Daten vom Lobbyregister ab (sucheDetailJson)...")
 
     while True:
-        params = {"format": "json"}
-        if cursor:
-            params["cursor"] = cursor
+        params = {
+            "sort": "REGISTRATION_DESC",
+            "pageSize": PAGE_SIZE,
+            "page": page,
+        }
 
         try:
             resp = requests.get(
-                f"{API_BASE}/registerentries",
-                headers=headers,
+                BASE_URL,
                 params=params,
-                timeout=30
+                timeout=60,
+                headers={"Accept": "application/json, text/plain, */*"}
             )
             resp.raise_for_status()
         except requests.RequestException as e:
-            print(f"FEHLER beim API-Abruf (Seite {page}): {e}")
+            print(f"FEHLER Seite {page}: {e}")
             raise
 
-        data = resp.json()
+        try:
+            data = resp.json()
+        except Exception as e:
+            print(f"FEHLER JSON-Parse Seite {page}: {e}")
+            print(f"Antwort: {resp.text[:300]}")
+            raise
 
-        # Diagnose nur auf Seite 0
+        # Diagnose erste Seite
         if page == 0:
             print(f"  Antwort-Typ: {type(data)}")
-            results_list = data.get("results", [])
-            print(f"  'results' Länge: {len(results_list)}")
-            if len(results_list) > 0:
-                first = results_list[0]
-                print(f"  ERSTER EINTRAG KOMPLETT:")
-                print(json.dumps(first, ensure_ascii=False, indent=2)[:4000])
+            if isinstance(data, dict):
+                print(f"  Schlüssel: {list(data.keys())}")
+                rc = data.get("resultCount", data.get("totalResultCount", "?"))
+                print(f"  Gesamt-Einträge laut API: {rc}")
 
         # Einträge extrahieren
-        entries = []
-        if isinstance(data, list):
-            entries = data
-        elif isinstance(data, dict):
-            for key in ["results", "content", "items", "data", "entries", "registerEntries"]:
-                if key in data and isinstance(data[key], list):
-                    entries = data[key]
-                    break
-            if not entries and "registerNumber" in data:
-                entries = [data]
+        results = []
+        if isinstance(data, dict):
+            results = data.get("results", [])
+        elif isinstance(data, list):
+            results = data
 
-        all_entries.extend(entries)
+        if page == 0 and results:
+            first = results[0]
+            print(f"  Erster Eintrag Schlüssel: {list(first.keys()) if isinstance(first, dict) else type(first)}")
+            if isinstance(first, dict):
+                detail = first.get("registerEntryDetail", first.get("registerEntryDetails", {}))
+                if isinstance(detail, dict):
+                    print(f"  Detail-Schlüssel: {list(detail.keys())[:15]}")
+                    stmts = detail.get("statements", {})
+                    print(f"  statements-Feld: {stmts if not isinstance(stmts, dict) or stmts.get('statementsCount',0) < 5 else list(stmts.keys())}")
+
+        if not results:
+            print(f"  Seite {page}: keine Einträge mehr, Stop.")
+            break
+
+        total_entries += len(results)
+
+        for entry in results:
+            stmts = extract_statements(entry)
+            all_statements.extend(stmts)
+
+        if page % 10 == 0 and page > 0:
+            print(f"  Seite {page} ({total_entries} Einträge, {len(all_statements)} Stellungnahmen)...")
+
+        # Nächste Seite?
+        if isinstance(data, dict):
+            result_count = data.get("resultCount", 0)
+            total_count = data.get("totalResultCount", result_count)
+            if total_entries >= total_count or len(results) < PAGE_SIZE:
+                break
+        elif len(results) < PAGE_SIZE:
+            break
+
         page += 1
 
-        # DIAGNOSE: nach erster Seite stoppen um Struktur zu prüfen
-        if page >= 1:
-            print(f"  DIAGNOSE-STOPP nach Seite {page} ({len(all_entries)} Einträge)")
-            break
-
-        new_cursor = data.get("cursor") if isinstance(data, dict) else None
-        if not new_cursor or new_cursor == cursor:
-            break
-        cursor = new_cursor
-
-        if page % 20 == 0:
-            print(f"  Seite {page} ({len(all_entries)} Einträge gesamt)...")
-
-    print(f"  Insgesamt {len(all_entries)} Registereinträge abgerufen.")
-    return all_entries
+    print(f"Gesamt: {total_entries} Einträge abgerufen, {len(all_statements)} relevante Stellungnahmen.")
+    return all_statements
 
 
-def extract_statements_from_entries(entries):
-    """Extrahiert relevante Stellungnahmen aus allen Registereinträgen."""
-    results = []
+def extract_statements(entry):
+    """Extrahiert Stellungnahmen aus einem Registereintrag."""
+    if not isinstance(entry, dict):
+        return []
 
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
+    register_number = entry.get("registerNumber", "")
 
-        register_number = entry.get("registerNumber", "")
-        org_name = extract_org_name(entry)
+    # Detail kann direkt im Eintrag oder unter registerEntryDetail liegen
+    detail = entry.get("registerEntryDetail", entry)
+    if not isinstance(detail, dict):
+        detail = entry
 
-        # Stellungnahmen-Daten suchen
-        stmts_container = None
-        for key in ["statements", "regulatoryProjects"]:
-            val = entry.get(key)
-            if val:
-                stmts_container = val
-                break
+    # Organisationsname
+    org = extract_org_name(detail)
 
-        # Auch in registerEntryDetails suchen
-        details = entry.get("registerEntryDetails", {})
-        if isinstance(details, dict) and not stmts_container:
-            for key in ["statements", "regulatoryProjects"]:
-                val = details.get(key)
-                if val:
-                    stmts_container = val
-                    break
-
-        if not stmts_container:
-            continue
-
-        # stmts_container kann dict mit 'statements'-Liste sein
-        if isinstance(stmts_container, dict):
-            stmt_list = stmts_container.get("statements", [])
-        elif isinstance(stmts_container, list):
-            stmt_list = stmts_container
-        else:
-            continue
-
-        for stmt in stmt_list:
-            if not isinstance(stmt, dict):
-                continue
-
-            result = process_statement(stmt, register_number, org_name, entry)
-            if result:
-                results.append(result)
-
-    return results
-
-
-def extract_org_name(entry):
-    """Extrahiert Organisationsname aus verschiedenen möglichen Strukturen."""
-    # Direkt im Eintrag
-    for key in ["lobbyistIdentity", "identity", "organisation"]:
-        val = entry.get(key)
-        if isinstance(val, dict):
-            name = val.get("name", "")
-            if name:
-                return name
-        elif isinstance(val, str) and val:
-            return val
-
-    # Im registerEntryDetails
-    details = entry.get("registerEntryDetails", {})
-    if isinstance(details, dict):
-        for key in ["lobbyistIdentity", "identity"]:
-            val = details.get(key)
-            if isinstance(val, dict):
-                name = val.get("name", "")
-                if name:
-                    return name
-
-    return entry.get("name", "Unbekannte Organisation")
-
-
-def process_statement(stmt, register_number, org_name, parent_entry):
-    """Verarbeitet eine einzelne Stellungnahme."""
-    # Datum
+    # Upload-Datum
     upload_date = None
-    sending_date = None
-
-    # Upload-Datum aus Parent-Eintrag
-    account = parent_entry.get("accountDetails", parent_entry.get("account", {}))
+    account = detail.get("account", {})
     if isinstance(account, dict):
         pub = account.get("firstPublicationDate", "")
         if pub:
@@ -202,7 +170,39 @@ def process_statement(stmt, register_number, org_name, parent_entry):
             except ValueError:
                 pass
 
-    # Sending-Datum aus recipientGroups
+    # Stellungnahmen
+    stmts_data = detail.get("statements", {})
+    if not isinstance(stmts_data, dict):
+        return []
+    if not stmts_data.get("statementsPresent", False):
+        return []
+
+    results = []
+    for stmt in stmts_data.get("statements", []):
+        if not isinstance(stmt, dict):
+            continue
+
+        result = process_statement(stmt, register_number, org, upload_date)
+        if result:
+            results.append(result)
+
+    return results
+
+
+def extract_org_name(detail):
+    """Extrahiert den Organisationsnamen."""
+    identity = detail.get("lobbyistIdentity", {})
+    if isinstance(identity, dict):
+        name = identity.get("name", "")
+        if name:
+            return name
+    return detail.get("name", "Unbekannte Organisation")
+
+
+def process_statement(stmt, register_number, org_name, upload_date):
+    """Verarbeitet eine einzelne Stellungnahme und prüft Filter."""
+    # Sending-Datum
+    sending_date = None
     for rg in stmt.get("recipientGroups", []):
         sd = rg.get("sendingDate", "")
         if sd:
@@ -217,7 +217,7 @@ def process_statement(stmt, register_number, org_name, parent_entry):
     if check_date and check_date < START_DATE:
         return None
 
-    # Empfänger prüfen
+    # Empfänger
     recipients = []
     for rg in stmt.get("recipientGroups", []):
         recips = rg.get("recipients", {})
@@ -228,36 +228,39 @@ def process_statement(stmt, register_number, org_name, parent_entry):
                 if short:
                     recipients.append(short)
             for p in recips.get("parliament", []):
-                recipients.append("Bundestag")
-                break
+                de_name = p.get("de", "")
+                if de_name:
+                    recipients.append("Bundestag")
+                    break
 
     recipients = list(dict.fromkeys(recipients))
-
     if not any(r in TARGET_RECIPIENTS for r in recipients):
         return None
 
-    # Themenfelder prüfen
+    # Themenfelder
     fields = []
     for f in stmt.get("fieldsOfInterest", []):
         if isinstance(f, dict):
             code = f.get("code", "")
-            label = f.get("de", "") or f.get("label", "") or code
-            fields.append({"code": code, "label": label})
+            label = FIELD_LABELS.get(code) or f.get("de", "") or code
+            if code:
+                fields.append({"code": code, "label": label})
 
     field_codes = {f["code"] for f in fields}
     if not field_codes & TARGET_FIELD_CODES:
         return None
 
-    # Priorität
     priority = min((FIELD_PRIORITY.get(c, 99) for c in field_codes), default=99)
 
-    # Summary
     text_obj = stmt.get("text", {})
-    summary = text_obj.get("text", "") if isinstance(text_obj, dict) else str(text_obj)
+    summary = text_obj.get("text", "") if isinstance(text_obj, dict) else ""
+
+    sn = str(stmt.get("statementNumber", ""))
+    rn = str(register_number)
 
     return {
-        "statement_number": str(stmt.get("statementNumber", "")),
-        "register_number": str(register_number),
+        "statement_number": sn,
+        "register_number": rn,
         "regulatory_project_title": str(stmt.get("regulatoryProjectTitle", "Kein Titel")),
         "org_name": str(org_name),
         "sending_date": sending_date.isoformat() if sending_date else None,
@@ -393,10 +396,9 @@ def generate_html(statements, generated_at):
 def main():
     print("=== Lobbyregister Monitor – Seitengenerierung ===")
 
-    entries = fetch_all_entries()
-    statements = extract_statements_from_entries(entries)
+    statements = fetch_all_statements()
 
-    print(f"Relevante Stellungnahmen nach Filterung: {len(statements)}")
+    print(f"Relevante Stellungnahmen: {len(statements)}")
     if not statements:
         print("WARNUNG: Keine Einträge. Seite wird trotzdem generiert.")
 

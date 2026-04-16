@@ -36,7 +36,7 @@ jobs:
   send-email:
     name: Wöchentliche Mail versenden
     runs-on: ubuntu-latest
-    needs: build-site  # Wartet bis Seite fertig ist
+    needs: build-site
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -57,23 +57,28 @@ jobs:
           SITE_URL: "https://rulosapire1.github.io/lobbyregister-monitor"
         run: python scripts/send_email.py
 
-  monitor:
-    name: Fehlerüberwachung
+  health-check:
+    name: Wöchentlicher Selbsttest
     runs-on: ubuntu-latest
     needs: [build-site, send-email]
-    if: failure()  # Nur bei Fehler
+    if: always()  # Immer ausführen, auch wenn vorherige Jobs fehlschlagen
     steps:
-      - name: Fehler-Benachrichtigung senden
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Abhängigkeiten installieren
+        run: pip install requests
+
+      - name: Selbsttest durchführen
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
-        run: |
-          curl -s -X POST https://api.resend.com/emails \
-            -H "Authorization: Bearer $RESEND_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"from\": \"onboarding@resend.dev\",
-              \"to\": [\"$ADMIN_EMAIL\"],
-              \"subject\": \"⚠️ Lobbyregister-Monitor: Fehler aufgetreten\",
-              \"html\": \"<p>Beim automatischen Durchlauf des Lobbyregister-Monitors ist ein Fehler aufgetreten.</p><p>Bitte prüfe die <a href='https://github.com/rulosapire1/lobbyregister-monitor/actions'>GitHub Actions</a> für Details.</p><p>Wartungsdokumentation: <a href='https://rulosapire1.github.io/lobbyregister-monitor/wartung'>hier</a></p>\"
-            }"
+          LOBBYREGISTER_API_KEY: ${{ secrets.LOBBYREGISTER_API_KEY }}
+          SITE_URL: "https://rulosapire1.github.io/lobbyregister-monitor"
+        run: python scripts/health_check.py
+        continue-on-error: true  # Selbsttest-Fehler soll Workflow nicht blockieren

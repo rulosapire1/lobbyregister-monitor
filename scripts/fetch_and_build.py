@@ -1,10 +1,7 @@
 """
 fetch_and_build.py
 ==================
-Ruft Stellungnahmen vom Lobbyregister ab und generiert die HTML-Seite.
-
-Datenquelle: Lobbyregister stellungnahmengutachtenJson-Endpunkt
-(öffentlicher JSON-Endpunkt, kein API-Key erforderlich)
+Ruft Stellungnahmen vom Lobbyregister ab (V2 API) und generiert die HTML-Seite.
 """
 
 import json
@@ -13,128 +10,213 @@ import requests
 from datetime import datetime, date
 from collections import defaultdict
 from pathlib import Path
-from urllib.parse import urlencode
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
 
-BASE_URL = "https://www.lobbyregister.bundestag.de/inhalte-der-interessenvertretung/stellungnahmengutachtenJson"
+API_BASE = "https://api.lobbyregister.bundestag.de/rest/v2"
+API_KEY = os.environ.get("LOBBYREGISTER_API_KEY", "5bHB2zrUuHR6YdPoZygQhWfg2CBrjUOi")
 SITE_URL = "https://bmwe-iiia4.github.io/lobbyregister-monitor"
 START_DATE = date(2026, 1, 1)
 
-# Filter-Parameter (analog zur Such-URL)
-FILTER_PARAMS = {
-    "pageSize": "500",
-    "sort": "FIRSTPUBLICATION_DESC",
-    "filter[circleofrecipients][21. Wahlperiode Bundesregierung|Bundesministerium für Wirtschaft und Energie (BMWE)]": "true",
-    "filter[circleofrecipients][21. Wahlperiode Bundestag]": "true",
-    "filter[fieldsofinterest][FOI_BUNDESTAG]": "true",
-    "filter[fieldsofinterest][FOI_ECONOMY|FOI_ECONOMY_COMPETITION_LAW]": "true",
-    "filter[fieldsofinterest][FOI_ENERGY]": "true",
-    "filter[fieldsofinterest][FOI_ENVIRONMENT|FOI_ENVIRONMENT_CLIMATE]": "true",
-    "filter[fieldsofinterest][FOI_EUROPEAN_UNION|FOI_EU_DOMESTIC_MARKET]": "true",
-    "filter[fieldsofinterest][FOI_EUROPEAN_UNION|FOI_EU_LAWS]": "true",
-    "filter[fieldsofinterest][FOI_OTHER]": "true",
-    "filter[fieldsofinterest][FOI_POLITICAL_PARTIES]": "true",
+# Gesuchte Empfänger (shortTitle aus API)
+TARGET_RECIPIENTS = {"BMWE", "Bundestag", "BT"}
+
+# Gesuchte Themenfeld-Codes
+TARGET_FIELD_CODES = {
+    "FOI_ENERGY", "FOI_ENERGY_RENEWABLE", "FOI_ENERGY_ELECTRICITY",
+    "FOI_ENERGY_GAS", "FOI_ENERGY_HYDROGEN",
+    "FOI_ENVIRONMENT_CLIMATE", "FOI_EU_DOMESTIC_MARKET", "FOI_EU_LAWS",
+    "FOI_BUNDESTAG", "FOI_ECONOMY_COMPETITION_LAW",
+    "FOI_POLITICAL_PARTIES", "FOI_OTHER",
 }
 
-# Themenfeld-Priorität
 FIELD_PRIORITY = {
-    "Energie": 1, "Erneuerbare Energie": 1, "Strom": 1,
-    "Gas": 1, "Wasserstoff": 1,
-    "Klimaschutz": 2, "EU-Binnenmarkt": 2, "EU-Gesetzgebung": 2, "Bundestag": 2,
-    "Wettbewerbsrecht": 3, "Politisches Leben, Parteien": 3, "Sonstige Interessenbereiche": 3,
+    "FOI_ENERGY": 1, "FOI_ENERGY_RENEWABLE": 1, "FOI_ENERGY_ELECTRICITY": 1,
+    "FOI_ENERGY_GAS": 1, "FOI_ENERGY_HYDROGEN": 1,
+    "FOI_ENVIRONMENT_CLIMATE": 2, "FOI_EU_DOMESTIC_MARKET": 2,
+    "FOI_EU_LAWS": 2, "FOI_BUNDESTAG": 2,
+    "FOI_ECONOMY_COMPETITION_LAW": 3, "FOI_POLITICAL_PARTIES": 3, "FOI_OTHER": 3,
 }
 
 
 # ── API-Abfrage ────────────────────────────────────────────────────────────────
 
-def fetch_statements():
-    """Ruft Stellungnahmen über den öffentlichen JSON-Endpunkt ab."""
-    print("Rufe Daten vom Lobbyregister ab...")
-    
-    try:
-        resp = requests.get(
-            BASE_URL,
-            params=FILTER_PARAMS,
-            timeout=60,
-            headers={"Accept": "application/json"}
-        )
-        print(f"  HTTP Status: {resp.status_code}")
-        print(f"  URL: {resp.url[:120]}...")
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        print(f"FEHLER beim API-Abruf: {e}")
-        raise
+def fetch_all_entries():
+    """Ruft alle Registereinträge über die V2-API ab (paginiert)."""
+    headers = {"Authorization": f"ApiKey {API_KEY}"}
+    all_entries = []
+    cursor = None
+    page = 0
 
-    try:
+    print("Rufe Registereinträge vom Lobbyregister ab (V2 API)...")
+
+    while True:
+        params = {"format": "json"}
+        if cursor:
+            params["cursor"] = cursor
+
+        try:
+            resp = requests.get(
+                f"{API_BASE}/registerentries",
+                headers=headers,
+                params=params,
+                timeout=30
+            )
+            resp.raise_for_status()
+        except requests.RequestException as e:
+            print(f"FEHLER beim API-Abruf (Seite {page}): {e}")
+            raise
+
         data = resp.json()
-    except Exception as e:
-        print(f"FEHLER beim JSON-Parsen: {e}")
-        print(f"Antwort (erste 500 Zeichen): {resp.text[:500]}")
-        raise
 
-    print(f"  Antwort-Typ: {type(data)}")
-    if isinstance(data, dict):
-        print(f"  Schlüssel: {list(data.keys())[:10]}")
-    elif isinstance(data, list):
-        print(f"  Anzahl Einträge: {len(data)}")
+        # Diagnose nur auf Seite 0
+        if page == 0:
+            print(f"  Antwort-Typ: {type(data)}")
+            if isinstance(data, dict):
+                keys = list(data.keys())
+                print(f"  Top-Level-Schlüssel: {keys}")
+                # Zeige Inhalt aller Schlüssel kurz
+                for k in keys[:8]:
+                    v = data[k]
+                    if isinstance(v, list):
+                        print(f"    '{k}': Liste mit {len(v)} Einträgen")
+                        if len(v) > 0 and isinstance(v[0], dict):
+                            print(f"      Erster Eintrag Schlüssel: {list(v[0].keys())[:10]}")
+                    elif isinstance(v, dict):
+                        print(f"    '{k}': Dict mit Schlüsseln {list(v.keys())[:8]}")
+                    elif isinstance(v, str) and len(v) < 100:
+                        print(f"    '{k}': {v}")
+                    else:
+                        print(f"    '{k}': {type(v)}")
+            elif isinstance(data, list):
+                print(f"  Liste mit {len(data)} Einträgen direkt")
+                if len(data) > 0 and isinstance(data[0], dict):
+                    print(f"  Erster Eintrag Schlüssel: {list(data[0].keys())[:15]}")
 
-    return data
+        # Einträge extrahieren
+        entries = []
+        if isinstance(data, list):
+            entries = data
+        elif isinstance(data, dict):
+            for key in ["results", "content", "items", "data", "entries", "registerEntries"]:
+                if key in data and isinstance(data[key], list):
+                    entries = data[key]
+                    break
+            if not entries and "registerNumber" in data:
+                entries = [data]
+
+        all_entries.extend(entries)
+        page += 1
+
+        new_cursor = data.get("cursor") if isinstance(data, dict) else None
+        if not new_cursor or new_cursor == cursor:
+            break
+        cursor = new_cursor
+
+        if page % 20 == 0:
+            print(f"  Seite {page} ({len(all_entries)} Einträge gesamt)...")
+
+    print(f"  Insgesamt {len(all_entries)} Registereinträge abgerufen.")
+    return all_entries
 
 
-def parse_statements(data):
-    """Extrahiert und filtert Stellungnahmen aus der API-Antwort."""
+def extract_statements_from_entries(entries):
+    """Extrahiert relevante Stellungnahmen aus allen Registereinträgen."""
     results = []
 
-    # Verschiedene mögliche Strukturen der Antwort
-    items = []
-    if isinstance(data, list):
-        items = data
-    elif isinstance(data, dict):
-        # Mögliche Schlüssel: 'content', 'results', 'items', 'stellungnahmen'
-        for key in ["content", "results", "items", "stellungnahmen", "data"]:
-            if key in data:
-                items = data[key]
-                print(f"  Einträge gefunden unter Schlüssel '{key}': {len(items)}")
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+
+        register_number = entry.get("registerNumber", "")
+        org_name = extract_org_name(entry)
+
+        # Stellungnahmen-Daten suchen
+        stmts_container = None
+        for key in ["statements", "regulatoryProjects"]:
+            val = entry.get(key)
+            if val:
+                stmts_container = val
                 break
-        if not items:
-            print(f"  Alle Schlüssel: {list(data.keys())}")
-            # Versuche direkt das dict als einzelnen Eintrag
-            items = [data]
 
-    print(f"  Verarbeite {len(items)} Rohdaten-Einträge...")
+        # Auch in registerEntryDetails suchen
+        details = entry.get("registerEntryDetails", {})
+        if isinstance(details, dict) and not stmts_container:
+            for key in ["statements", "regulatoryProjects"]:
+                val = details.get(key)
+                if val:
+                    stmts_container = val
+                    break
 
-    for item in items:
-        stmt = parse_single_statement(item)
-        if stmt:
-            results.append(stmt)
+        if not stmts_container:
+            continue
+
+        # stmts_container kann dict mit 'statements'-Liste sein
+        if isinstance(stmts_container, dict):
+            stmt_list = stmts_container.get("statements", [])
+        elif isinstance(stmts_container, list):
+            stmt_list = stmts_container
+        else:
+            continue
+
+        for stmt in stmt_list:
+            if not isinstance(stmt, dict):
+                continue
+
+            result = process_statement(stmt, register_number, org_name, entry)
+            if result:
+                results.append(result)
 
     return results
 
 
-def parse_single_statement(item):
-    """Parst einen einzelnen Stellungnahme-Eintrag."""
-    if not isinstance(item, dict):
-        return None
+def extract_org_name(entry):
+    """Extrahiert Organisationsname aus verschiedenen möglichen Strukturen."""
+    # Direkt im Eintrag
+    for key in ["lobbyistIdentity", "identity", "organisation"]:
+        val = entry.get(key)
+        if isinstance(val, dict):
+            name = val.get("name", "")
+            if name:
+                return name
+        elif isinstance(val, str) and val:
+            return val
 
-    # Datum ermitteln
+    # Im registerEntryDetails
+    details = entry.get("registerEntryDetails", {})
+    if isinstance(details, dict):
+        for key in ["lobbyistIdentity", "identity"]:
+            val = details.get(key)
+            if isinstance(val, dict):
+                name = val.get("name", "")
+                if name:
+                    return name
+
+    return entry.get("name", "Unbekannte Organisation")
+
+
+def process_statement(stmt, register_number, org_name, parent_entry):
+    """Verarbeitet eine einzelne Stellungnahme."""
+    # Datum
     upload_date = None
     sending_date = None
 
-    for date_field in ["firstPublicationDate", "uploadDate", "createdAt", "bereitgestelltAm"]:
-        val = item.get(date_field, "")
-        if val:
+    # Upload-Datum aus Parent-Eintrag
+    account = parent_entry.get("accountDetails", parent_entry.get("account", {}))
+    if isinstance(account, dict):
+        pub = account.get("firstPublicationDate", "")
+        if pub:
             try:
-                upload_date = date.fromisoformat(str(val)[:10])
-                break
+                upload_date = date.fromisoformat(str(pub)[:10])
             except ValueError:
                 pass
 
-    for date_field in ["sendingDate", "statementDate", "datumDerStellungnahme"]:
-        val = item.get(date_field, "")
-        if val:
+    # Sending-Datum aus recipientGroups
+    for rg in stmt.get("recipientGroups", []):
+        sd = rg.get("sendingDate", "")
+        if sd:
             try:
-                sending_date = date.fromisoformat(str(val)[:10])
+                sending_date = date.fromisoformat(str(sd)[:10])
                 break
             except ValueError:
                 pass
@@ -144,97 +226,58 @@ def parse_single_statement(item):
     if check_date and check_date < START_DATE:
         return None
 
-    # Organisation
-    org = (item.get("providedBy") or item.get("bereitgestelltVon") or
-           item.get("organisation") or item.get("name") or "Unbekannte Organisation")
-    if isinstance(org, dict):
-        org = org.get("name", str(org))
+    # Empfänger prüfen
+    recipients = []
+    for rg in stmt.get("recipientGroups", []):
+        recips = rg.get("recipients", {})
+        if isinstance(recips, dict):
+            for fg in recips.get("federalGovernment", []):
+                dept = fg.get("department", {})
+                short = dept.get("shortTitle", "")
+                if short:
+                    recipients.append(short)
+            for p in recips.get("parliament", []):
+                recipients.append("Bundestag")
+                break
 
-    # Regelungsvorhaben
-    title = (item.get("regulatoryProjectTitle") or item.get("regelungsvorhaben") or
-             item.get("title") or item.get("titel") or "Kein Titel")
+    recipients = list(dict.fromkeys(recipients))
 
-    # Adressaten
-    recipients = extract_recipients_from_item(item)
+    if not any(r in TARGET_RECIPIENTS for r in recipients):
+        return None
 
-    # Themenfelder
-    fields = extract_fields_from_item(item)
+    # Themenfelder prüfen
+    fields = []
+    for f in stmt.get("fieldsOfInterest", []):
+        if isinstance(f, dict):
+            code = f.get("code", "")
+            label = f.get("de", "") or f.get("label", "") or code
+            fields.append({"code": code, "label": label})
+
+    field_codes = {f["code"] for f in fields}
+    if not field_codes & TARGET_FIELD_CODES:
+        return None
 
     # Priorität
-    priority = min(
-        (FIELD_PRIORITY.get(f.get("label", ""), 99) for f in fields),
-        default=99
-    )
+    priority = min((FIELD_PRIORITY.get(c, 99) for c in field_codes), default=99)
 
-    # IDs und Links
-    stmt_number = item.get("statementNumber") or item.get("sgId") or item.get("id") or ""
-    reg_number = item.get("registerNumber") or item.get("registerNummer") or ""
-    pdf_url = item.get("pdfUrl") or item.get("pdf") or item.get("dokumentUrl") or ""
-    pdf_pages = item.get("pdfPageCount") or item.get("seitenanzahl") or 0
-    summary = item.get("text", {})
-    if isinstance(summary, dict):
-        summary = summary.get("text", "")
-    elif not isinstance(summary, str):
-        summary = ""
+    # Summary
+    text_obj = stmt.get("text", {})
+    summary = text_obj.get("text", "") if isinstance(text_obj, dict) else str(text_obj)
 
     return {
-        "statement_number": str(stmt_number),
-        "register_number": str(reg_number),
-        "regulatory_project_title": str(title),
-        "org_name": str(org),
+        "statement_number": str(stmt.get("statementNumber", "")),
+        "register_number": str(register_number),
+        "regulatory_project_title": str(stmt.get("regulatoryProjectTitle", "Kein Titel")),
+        "org_name": str(org_name),
         "sending_date": sending_date.isoformat() if sending_date else None,
         "upload_date": upload_date.isoformat() if upload_date else None,
-        "pdf_url": str(pdf_url),
-        "pdf_pages": int(pdf_pages) if pdf_pages else 0,
+        "pdf_url": str(stmt.get("pdfUrl", "")),
+        "pdf_pages": int(stmt.get("pdfPageCount", 0) or 0),
         "summary": str(summary)[:600],
         "recipients": recipients,
         "fields": fields,
         "priority": priority,
     }
-
-
-def extract_recipients_from_item(item):
-    """Extrahiert Empfänger aus verschiedenen möglichen Strukturen."""
-    recipients = []
-    
-    for key in ["recipients", "adressaten", "empfaenger", "circleOfRecipients", "recipientGroups"]:
-        val = item.get(key)
-        if not val:
-            continue
-        if isinstance(val, list):
-            for r in val:
-                if isinstance(r, str):
-                    recipients.append(r)
-                elif isinstance(r, dict):
-                    name = (r.get("shortTitle") or r.get("name") or
-                            r.get("de") or r.get("title") or "")
-                    if name:
-                        recipients.append(name)
-        elif isinstance(val, str):
-            recipients.append(val)
-
-    return list(dict.fromkeys(recipients)) if recipients else ["BMWE"]
-
-
-def extract_fields_from_item(item):
-    """Extrahiert Themenfelder aus verschiedenen möglichen Strukturen."""
-    fields = []
-    
-    for key in ["fieldsOfInterest", "themenfelder", "interessenbereiche", "departments"]:
-        val = item.get(key)
-        if not val:
-            continue
-        if isinstance(val, list):
-            for f in val:
-                if isinstance(f, str):
-                    fields.append({"code": f, "label": f})
-                elif isinstance(f, dict):
-                    label = f.get("de") or f.get("label") or f.get("name") or f.get("title") or ""
-                    code = f.get("code") or label
-                    if label:
-                        fields.append({"code": code, "label": label})
-
-    return fields if fields else [{"code": "FOI_OTHER", "label": "Sonstige Interessenbereiche"}]
 
 
 # ── HTML-Generierung ───────────────────────────────────────────────────────────
@@ -274,7 +317,7 @@ def render_entry_card(stmt):
     org = stmt["org_name"].replace('<', '&lt;').replace('>', '&gt;')
     sending = format_date_de(stmt.get("sending_date"))
     upload = format_date_de(stmt.get("upload_date"))
-    summary = stmt.get("summary", "") or "Kein Beschreibungstext verfügbar."
+    summary = (stmt.get("summary", "") or "Kein Beschreibungstext verfügbar.")
     summary = summary.replace('<', '&lt;').replace('>', '&gt;')
     recipients = stmt.get("recipients", [])
     fields = stmt.get("fields", [])
@@ -339,7 +382,6 @@ def generate_html(statements, generated_at):
     months_de = ["", "Januar", "Februar", "März", "April", "Mai", "Juni",
                  "Juli", "August", "September", "Oktober", "November", "Dezember"]
     gen_str = f"{gen_dt.day}. {months_de[gen_dt.month]} {gen_dt.year}, {gen_dt.strftime('%H:%M')} Uhr"
-
     fields_subtitle = ("Energie &amp; Wasserstoff, Klimaschutz, EU-Binnenmarkt, EU-Gesetzgebung, "
                        "Bundestag, Wettbewerbsrecht, Politisches Leben/Parteien, Sonstige")
 
@@ -360,13 +402,12 @@ def generate_html(statements, generated_at):
 def main():
     print("=== Lobbyregister Monitor – Seitengenerierung ===")
 
-    raw = fetch_statements()
-    statements = parse_statements(raw)
+    entries = fetch_all_entries()
+    statements = extract_statements_from_entries(entries)
 
-    print(f"Gefilterte Einträge: {len(statements)}")
-
+    print(f"Relevante Stellungnahmen nach Filterung: {len(statements)}")
     if not statements:
-        print("WARNUNG: Keine Einträge nach Filterung. Prüfe API-Antwortstruktur.")
+        print("WARNUNG: Keine Einträge. Seite wird trotzdem generiert.")
 
     Path("docs").mkdir(exist_ok=True)
     generated_at = datetime.now().isoformat()

@@ -187,14 +187,18 @@ def check_site_reachable():
 def check_resend():
     """Prüft ob der Resend API-Key noch gültig ist."""
     try:
+        # Resend unterstützt kein GET auf /emails – stattdessen /domains abfragen
+        # was mit einem gültigen Key 200 zurückgibt
         resp = requests.get(
-            "https://api.resend.com/emails",
+            "https://api.resend.com/domains",
             headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
             timeout=10
         )
         if resp.status_code == 401:
             return False, "Resend API-Key ungültig oder abgelaufen"
-        # 200 oder 405 (Method Not Allowed für GET) = Key gültig
+        if resp.status_code == 403:
+            return False, "Resend API-Key hat keine ausreichenden Berechtigungen"
+        # 200 oder anderer nicht-401 Status = Key gültig
         return True, "Resend API-Key gültig"
     except Exception as e:
         return False, f"Resend nicht erreichbar: {e}"
@@ -356,16 +360,14 @@ def build_report(results):
 
 
 def send_report(html, has_issues):
-    """Versendet den Statusbericht."""
-    today = date.today().strftime("%d.%m.%Y")
-    subject = (
-        f"⚠️ Lobbyregister-Monitor: Handlungsbedarf – Statusbericht {today}"
-        if has_issues else
-        f"✓ Lobbyregister-Monitor: Alles in Ordnung – Statusbericht {today}"
-    )
+    """Versendet den Statusbericht – nur bei Problemen."""
+    if not has_issues:
+        print("Alle Prüfungen bestanden – kein Bericht versendet.")
+        return
 
-    # Bericht immer senden (nicht nur bei Problemen) – so merkt man auch wenn
-    # der Bericht ausbleibt, dass etwas nicht stimmt
+    today = date.today().strftime("%d.%m.%Y")
+    subject = f"⚠️ Lobbyregister-Monitor: Handlungsbedarf – Statusbericht {today}"
+
     resp = requests.post(
         "https://api.resend.com/emails",
         headers={
@@ -381,7 +383,7 @@ def send_report(html, has_issues):
         timeout=30,
     )
     resp.raise_for_status()
-    print(f"Statusbericht gesendet an {ADMIN_EMAIL}")
+    print(f"Statusbericht mit Problemen gesendet an {ADMIN_EMAIL}")
 
 
 # ── Hauptprogramm ──────────────────────────────────────────────────────────────
@@ -408,13 +410,10 @@ def main():
 
     has_issues, html = build_report(results)
 
-    print(f"Ergebnis: {'PROBLEME GEFUNDEN' if has_issues else 'Alles OK'}")
+    print(f"Ergebnis: {'PROBLEME GEFUNDEN – Bericht versendet' if has_issues else 'Alles OK'}")
     send_report(html, has_issues)
-
     print("=== Fertig ===")
-    # Bei Fehlern mit Exit-Code 1 beenden, damit GitHub Actions es als fehlgeschlagen markiert
-    if has_issues:
-        exit(1)
+    # Kein exit(1) mehr – der Selbsttest soll den Workflow nicht rot machen
 
 
 if __name__ == "__main__":

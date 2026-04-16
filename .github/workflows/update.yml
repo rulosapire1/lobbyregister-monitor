@@ -1,0 +1,79 @@
+name: Lobbyregister Monitor
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Jeden Montag um 6:00 Uhr UTC
+  workflow_dispatch:       # Manueller Start jederzeit möglich
+
+jobs:
+  build-site:
+    name: Seite aktualisieren
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Abhängigkeiten installieren
+        run: pip install requests
+
+      - name: Daten abrufen und Seite generieren
+        env:
+          LOBBYREGISTER_API_KEY: ${{ secrets.LOBBYREGISTER_API_KEY }}
+        run: python scripts/fetch_and_build.py
+
+      - name: Seite auf GitHub Pages veröffentlichen
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          commit_message: "Automatische Aktualisierung vom ${{ github.run_id }}"
+
+  send-email:
+    name: Wöchentliche Mail versenden
+    runs-on: ubuntu-latest
+    needs: build-site  # Wartet bis Seite fertig ist
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Abhängigkeiten installieren
+        run: pip install requests
+
+      - name: E-Mail versenden
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
+          LOBBYREGISTER_API_KEY: ${{ secrets.LOBBYREGISTER_API_KEY }}
+          SITE_URL: "https://rulosapire1.github.io/lobbyregister-monitor"
+        run: python scripts/send_email.py
+
+  monitor:
+    name: Fehlerüberwachung
+    runs-on: ubuntu-latest
+    needs: [build-site, send-email]
+    if: failure()  # Nur bei Fehler
+    steps:
+      - name: Fehler-Benachrichtigung senden
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          curl -s -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"from\": \"onboarding@resend.dev\",
+              \"to\": [\"$ADMIN_EMAIL\"],
+              \"subject\": \"⚠️ Lobbyregister-Monitor: Fehler aufgetreten\",
+              \"html\": \"<p>Beim automatischen Durchlauf des Lobbyregister-Monitors ist ein Fehler aufgetreten.</p><p>Bitte prüfe die <a href='https://github.com/rulosapire1/lobbyregister-monitor/actions'>GitHub Actions</a> für Details.</p><p>Wartungsdokumentation: <a href='https://rulosapire1.github.io/lobbyregister-monitor/wartung'>hier</a></p>\"
+            }"

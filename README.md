@@ -43,7 +43,7 @@ docs/                          – Generierte Seiten (werden automatisch übersc
 
 Alle Informationen zur Wartung, zu Zugangsdaten, Fehlerbehebung und zur vollständigen Neueinrichtung durch eine dritte Person stehen in der [Wartungsdokumentation](https://rulosapire1.github.io/lobbyregister-monitor/wartung.html).
 
-**Ansprechpartner:** Martin Jahn, BMWE Unterabteilung IIIA4 · martin.jahn@bmwe.bund.de
+**Ansprechpartner:** Martin Jahn, IIIA4 · martin.jahn@bmwe.bund.de
 
 ## Datenquelle
 

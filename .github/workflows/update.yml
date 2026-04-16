@@ -5,6 +5,9 @@ on:
     - cron: '0 6 * * 1'  # Jeden Montag um 6:00 Uhr UTC
   workflow_dispatch:       # Manueller Start jederzeit möglich
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-site:
     name: Seite aktualisieren
@@ -61,7 +64,7 @@ jobs:
     name: Wöchentlicher Selbsttest
     runs-on: ubuntu-latest
     needs: [build-site, send-email]
-    if: always()  # Immer ausführen, auch wenn vorherige Jobs fehlschlagen
+    if: always()
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -81,4 +84,4 @@ jobs:
           LOBBYREGISTER_API_KEY: ${{ secrets.LOBBYREGISTER_API_KEY }}
           SITE_URL: "https://bmwe-iiia4.github.io/lobbyregister-monitor"
         run: python scripts/health_check.py
-        continue-on-error: true  # Selbsttest-Fehler soll Workflow nicht blockieren
+        continue-on-error: true

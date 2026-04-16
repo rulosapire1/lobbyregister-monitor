@@ -37,6 +37,13 @@ jobs:
           LOBBYREGISTER_API_KEY: ${{ secrets.LOBBYREGISTER_API_KEY }}
         run: python scripts/fetch_and_build.py
 
+      - name: data.json für nächsten Job speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: lobbyregister-data
+          path: docs/data.json
+          retention-days: 1
+
       - name: GitHub Pages konfigurieren
         uses: actions/configure-pages@v5
 
@@ -64,6 +71,12 @@ jobs:
 
       - name: Abhängigkeiten installieren
         run: pip install requests
+
+      - name: Daten vom vorherigen Job laden
+        uses: actions/download-artifact@v4
+        with:
+          name: lobbyregister-data
+          path: docs
 
       - name: E-Mail versenden
         env:

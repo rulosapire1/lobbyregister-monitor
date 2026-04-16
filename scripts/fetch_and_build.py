@@ -1,10 +1,11 @@
 """
 fetch_and_build.py
 ==================
-Ruft Stellungnahmen vom Lobbyregister ab und generiert die HTML-Seite.
+Ruft Stellungnahmen direkt vom Lobbyregister ab.
 
-Strategie: sucheDetailJson-Endpunkt mit Paginierung.
-Dieser Endpunkt gibt vollständige Registereinträge inkl. Stellungnahmen zurück.
+Strategie: sucheDetailJson mit allen Filtern direkt –
+inklusive filter[active][true]=true für aktive Regelungsvorhaben.
+Das reduziert die Ergebnismenge drastisch auf relevante Einträge.
 """
 
 import json
@@ -16,15 +17,14 @@ from pathlib import Path
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
 
-BASE_URL = "https://www.lobbyregister.bundestag.de/sucheDetailJson"
+LIST_URL = "https://www.lobbyregister.bundestag.de/sucheDetailJson"
+DETAIL_URL = "https://www.lobbyregister.bundestag.de/sucheJson"
 SITE_URL = "https://bmwe-iiia4.github.io/lobbyregister-monitor"
 START_DATE = date(2026, 1, 1)
 PAGE_SIZE = 100
 
-# Gesuchte Empfänger-Kurzzeichen
 TARGET_RECIPIENTS = {"BMWE", "Bundestag", "BT"}
 
-# Gesuchte Themenfeld-Codes
 TARGET_FIELD_CODES = {
     "FOI_ENERGY", "FOI_ENERGY_RENEWABLE", "FOI_ENERGY_ELECTRICITY",
     "FOI_ENERGY_GAS", "FOI_ENERGY_HYDROGEN",
@@ -51,157 +51,160 @@ FIELD_LABELS = {
     "FOI_OTHER": "Sonstige Interessenbereiche",
 }
 
+# Filter-Parameter direkt von der Such-URL übernommen
+FILTER_PARAMS = {
+    "filter[circleofrecipients][21. Wahlperiode Bundesregierung|Bundesministerium für Wirtschaft und Energie (BMWE)]": "true",
+    "filter[circleofrecipients][21. Wahlperiode Bundestag]": "true",
+    "filter[fieldsofinterest][FOI_BUNDESTAG]": "true",
+    "filter[fieldsofinterest][FOI_ECONOMY|FOI_ECONOMY_COMPETITION_LAW]": "true",
+    "filter[fieldsofinterest][FOI_ENERGY]": "true",
+    "filter[fieldsofinterest][FOI_ENVIRONMENT|FOI_ENVIRONMENT_CLIMATE]": "true",
+    "filter[fieldsofinterest][FOI_EUROPEAN_UNION|FOI_EU_DOMESTIC_MARKET]": "true",
+    "filter[fieldsofinterest][FOI_EUROPEAN_UNION|FOI_EU_LAWS]": "true",
+    "filter[fieldsofinterest][FOI_OTHER]": "true",
+    "filter[fieldsofinterest][FOI_POLITICAL_PARTIES]": "true",
+    "filter[active][true]": "true",
+    "sort": "FIRSTPUBLICATION_DESC",
+}
 
-# ── API-Abfrage ────────────────────────────────────────────────────────────────
+SESSION = requests.Session()
+SESSION.headers.update({"Accept": "application/json, text/plain, */*"})
 
-def fetch_all_statements():
+
+# ── Schritt 1: Kandidaten mit Filtern holen ────────────────────────────────────
+
+def fetch_candidates():
     """
-    Ruft alle Registereinträge paginiert ab und extrahiert Stellungnahmen.
-    sucheDetailJson gibt vollständige Einträge inkl. statements zurück.
+    Holt gefilterte Registereinträge. Der active-Filter reduziert
+    die Menge auf Einträge mit aktiven Regelungsvorhaben.
     """
-    all_statements = []
+    candidates = []
     page = 0
-    total_entries = 0
+    total_fetched = 0
 
-    print("Rufe Daten vom Lobbyregister ab (sucheDetailJson)...")
+    print("Schritt 1: Gefilterte Kandidaten holen...")
 
     while True:
-        params = {
-            "sort": "REGISTRATION_DESC",
-            "pageSize": PAGE_SIZE,
-            "page": page,
-        }
+        params = {**FILTER_PARAMS, "pageSize": PAGE_SIZE, "page": page}
 
         try:
-            resp = requests.get(
-                BASE_URL,
-                params=params,
-                timeout=60,
-                headers={"Accept": "application/json, text/plain, */*"}
-            )
+            resp = SESSION.get(LIST_URL, params=params, timeout=60)
             resp.raise_for_status()
-        except requests.RequestException as e:
-            print(f"FEHLER Seite {page}: {e}")
-            raise
-
-        try:
             data = resp.json()
         except Exception as e:
-            print(f"FEHLER JSON-Parse Seite {page}: {e}")
-            print(f"Antwort: {resp.text[:300]}")
-            raise
+            print(f"  FEHLER Seite {page}: {e}")
+            # Fallback: ohne Filter versuchen
+            print("  Versuche ohne active-Filter...")
+            fallback_params = {k: v for k, v in params.items()
+                             if k != "filter[active][true]"}
+            resp = SESSION.get(LIST_URL, params=fallback_params, timeout=60)
+            resp.raise_for_status()
+            data = resp.json()
 
-        # Diagnose erste Seite
-        if page == 0:
-            print(f"  Antwort-Typ: {type(data)}")
-            if isinstance(data, dict):
-                print(f"  Schlüssel: {list(data.keys())}")
-                rc = data.get("resultCount", data.get("totalResultCount", "?"))
-                print(f"  Gesamt-Einträge laut API: {rc}")
-
-        # Einträge extrahieren
-        results = []
-        if isinstance(data, dict):
-            results = data.get("results", [])
-        elif isinstance(data, list):
-            results = data
-
-        if page == 0 and results:
-            first = results[0]
-            print(f"  Erster Eintrag Schlüssel: {list(first.keys()) if isinstance(first, dict) else type(first)}")
-            if isinstance(first, dict):
-                detail = first.get("registerEntryDetail", first.get("registerEntryDetails", {}))
-                if isinstance(detail, dict):
-                    print(f"  Detail-Schlüssel: {list(detail.keys())[:15]}")
-                    stmts = detail.get("statements", {})
-                    print(f"  statements-Feld: {stmts if not isinstance(stmts, dict) or stmts.get('statementsCount',0) < 5 else list(stmts.keys())}")
-
+        results = data.get("results", [])
         if not results:
-            print(f"  Seite {page}: keine Einträge mehr, Stop.")
             break
 
-        total_entries += len(results)
+        total_fetched += len(results)
+        total_count = data.get("resultCount", data.get("totalResultCount", 0))
+
+        if page == 0:
+            print(f"  Gesamt laut API: {total_count} Einträge")
 
         for entry in results:
-            stmts = extract_statements(entry)
-            all_statements.extend(stmts)
+            if not isinstance(entry, dict):
+                continue
+            reg_num = entry.get("registerNumber", "")
+            details = entry.get("registerEntryDetails", {})
+            entry_id = details.get("registerEntryId", "") if isinstance(details, dict) else ""
+            pub_date = ""
+            acc = entry.get("accountDetails", {})
+            if isinstance(acc, dict):
+                pub_date = acc.get("firstPublicationDate", "")
 
-        if page % 10 == 0 and page > 0:
-            print(f"  Seite {page} ({total_entries} Einträge, {len(all_statements)} Stellungnahmen)...")
+            if reg_num and entry_id:
+                candidates.append({
+                    "registerNumber": reg_num,
+                    "entryId": entry_id,
+                    "firstPublicationDate": pub_date,
+                })
 
-        # Nächste Seite?
-        if isinstance(data, dict):
-            result_count = data.get("resultCount", 0)
-            total_count = data.get("totalResultCount", result_count)
-            if total_entries >= total_count or len(results) < PAGE_SIZE:
-                break
-        elif len(results) < PAGE_SIZE:
+        if page % 5 == 0 and page > 0:
+            print(f"  Seite {page}: {total_fetched}/{total_count}, {len(candidates)} Kandidaten...")
+
+        if total_fetched >= total_count or len(results) < PAGE_SIZE:
             break
 
         page += 1
 
-    print(f"Gesamt: {total_entries} Einträge abgerufen, {len(all_statements)} relevante Stellungnahmen.")
-    return all_statements
+    print(f"  {len(candidates)} Kandidaten gefunden.")
+    return candidates
 
 
-def extract_statements(entry):
-    """Extrahiert Stellungnahmen aus einem Registereintrag."""
-    if not isinstance(entry, dict):
-        return []
+# ── Schritt 2: Einzelabrufe ────────────────────────────────────────────────────
 
-    register_number = entry.get("registerNumber", "")
+def fetch_all_statements(candidates):
+    all_statements = []
+    total = len(candidates)
+    print(f"Schritt 2: {total} Einträge einzeln abrufen...")
 
-    # Detail kann direkt im Eintrag oder unter registerEntryDetail liegen
-    detail = entry.get("registerEntryDetail", entry)
-    if not isinstance(detail, dict):
-        detail = entry
+    for i, cand in enumerate(candidates):
+        reg_num = cand["registerNumber"]
+        entry_id = cand["entryId"]
+        pub_date_str = cand.get("firstPublicationDate", "")
 
-    # Organisationsname
-    org = extract_org_name(detail)
-
-    # Upload-Datum
-    upload_date = None
-    account = detail.get("account", {})
-    if isinstance(account, dict):
-        pub = account.get("firstPublicationDate", "")
-        if pub:
+        upload_date = None
+        if pub_date_str:
             try:
-                upload_date = date.fromisoformat(str(pub)[:10])
+                upload_date = date.fromisoformat(pub_date_str[:10])
             except ValueError:
                 pass
 
-    # Stellungnahmen
-    stmts_data = detail.get("statements", {})
-    if not isinstance(stmts_data, dict):
-        return []
-    if not stmts_data.get("statementsPresent", False):
-        return []
-
-    results = []
-    for stmt in stmts_data.get("statements", []):
-        if not isinstance(stmt, dict):
+        try:
+            resp = SESSION.get(
+                f"{DETAIL_URL}/{reg_num}/{entry_id}",
+                timeout=30
+            )
+            if resp.status_code == 404:
+                continue
+            resp.raise_for_status()
+            detail = resp.json()
+        except Exception as e:
+            if i < 3:
+                print(f"  FEHLER {reg_num}: {e}")
             continue
 
-        result = process_statement(stmt, register_number, org, upload_date)
-        if result:
-            results.append(result)
+        stmts_data = detail.get("statements", {})
+        if not isinstance(stmts_data, dict) or not stmts_data.get("statementsPresent", False):
+            continue
 
-    return results
+        org = extract_org_name(detail)
+
+        for stmt in stmts_data.get("statements", []):
+            result = process_statement(stmt, reg_num, org, upload_date)
+            if result:
+                all_statements.append(result)
+
+        if (i + 1) % 20 == 0:
+            print(f"  {i+1}/{total} abgerufen, {len(all_statements)} Stellungnahmen...")
+
+    print(f"  {len(all_statements)} relevante Stellungnahmen gefunden.")
+    return all_statements
 
 
 def extract_org_name(detail):
-    """Extrahiert den Organisationsnamen."""
     identity = detail.get("lobbyistIdentity", {})
     if isinstance(identity, dict):
         name = identity.get("name", "")
         if name:
             return name
-    return detail.get("name", "Unbekannte Organisation")
+    return "Unbekannte Organisation"
 
 
 def process_statement(stmt, register_number, org_name, upload_date):
-    """Verarbeitet eine einzelne Stellungnahme und prüft Filter."""
-    # Sending-Datum
+    if not isinstance(stmt, dict):
+        return None
+
     sending_date = None
     for rg in stmt.get("recipientGroups", []):
         sd = rg.get("sendingDate", "")
@@ -212,12 +215,10 @@ def process_statement(stmt, register_number, org_name, upload_date):
             except ValueError:
                 pass
 
-    # Datum-Filter
     check_date = upload_date or sending_date
     if check_date and check_date < START_DATE:
         return None
 
-    # Empfänger
     recipients = []
     for rg in stmt.get("recipientGroups", []):
         recips = rg.get("recipients", {})
@@ -228,8 +229,7 @@ def process_statement(stmt, register_number, org_name, upload_date):
                 if short:
                     recipients.append(short)
             for p in recips.get("parliament", []):
-                de_name = p.get("de", "")
-                if de_name:
+                if p.get("de", ""):
                     recipients.append("Bundestag")
                     break
 
@@ -237,7 +237,6 @@ def process_statement(stmt, register_number, org_name, upload_date):
     if not any(r in TARGET_RECIPIENTS for r in recipients):
         return None
 
-    # Themenfelder
     fields = []
     for f in stmt.get("fieldsOfInterest", []):
         if isinstance(f, dict):
@@ -251,16 +250,12 @@ def process_statement(stmt, register_number, org_name, upload_date):
         return None
 
     priority = min((FIELD_PRIORITY.get(c, 99) for c in field_codes), default=99)
-
     text_obj = stmt.get("text", {})
     summary = text_obj.get("text", "") if isinstance(text_obj, dict) else ""
 
-    sn = str(stmt.get("statementNumber", ""))
-    rn = str(register_number)
-
     return {
-        "statement_number": sn,
-        "register_number": rn,
+        "statement_number": str(stmt.get("statementNumber", "")),
+        "register_number": str(register_number),
         "regulatory_project_title": str(stmt.get("regulatoryProjectTitle", "Kein Titel")),
         "org_name": str(org_name),
         "sending_date": sending_date.isoformat() if sending_date else None,
@@ -296,9 +291,9 @@ def format_date_de(iso_date):
 
 
 def get_weekday_de(iso_date):
-    days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
-    months = ["", "Januar", "Februar", "März", "April", "Mai", "Juni",
-              "Juli", "August", "September", "Oktober", "November", "Dezember"]
+    days = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"]
+    months = ["","Januar","Februar","März","April","Mai","Juni",
+              "Juli","August","September","Oktober","November","Dezember"]
     try:
         d = date.fromisoformat(iso_date)
         return f"{days[d.weekday()]}, {d.day}. {months[d.month]} {d.year}"
@@ -307,18 +302,18 @@ def get_weekday_de(iso_date):
 
 
 def render_entry_card(stmt):
-    title = stmt["regulatory_project_title"].replace('"', '&quot;').replace('<', '&lt;').replace('>', '&gt;')
-    org = stmt["org_name"].replace('<', '&lt;').replace('>', '&gt;')
+    title = stmt["regulatory_project_title"].replace('"','&quot;').replace('<','&lt;').replace('>','&gt;')
+    org = stmt["org_name"].replace('<','&lt;').replace('>','&gt;')
     sending = format_date_de(stmt.get("sending_date"))
     upload = format_date_de(stmt.get("upload_date"))
-    summary = (stmt.get("summary", "") or "Kein Beschreibungstext verfügbar.")
-    summary = summary.replace('<', '&lt;').replace('>', '&gt;')
-    recipients = stmt.get("recipients", [])
-    fields = stmt.get("fields", [])
-    pdf_url = stmt.get("pdf_url", "")
-    pdf_pages = stmt.get("pdf_pages", 0)
+    summary = (stmt.get("summary","") or "Kein Beschreibungstext verfügbar.")
+    summary = summary.replace('<','&lt;').replace('>','&gt;')
+    recipients = stmt.get("recipients",[])
+    fields = stmt.get("fields",[])
+    pdf_url = stmt.get("pdf_url","")
+    pdf_pages = stmt.get("pdf_pages",0)
     stmt_url = build_url(stmt)
-    stmt_number = stmt.get("statement_number", "")
+    stmt_number = stmt.get("statement_number","")
 
     recip_badges = "".join(f'<span class="abadge">{r}</span>' for r in recipients)
     field_tags = "".join(f'<span class="tag">{f["label"]}</span>' for f in fields)
@@ -357,7 +352,7 @@ def generate_html(statements, generated_at):
 
     day_sections_html = ""
     for iso_date, day_stmts in sorted(by_date.items(), reverse=True):
-        day_stmts_sorted = sorted(day_stmts, key=lambda x: x.get("priority", 99))
+        day_stmts_sorted = sorted(day_stmts, key=lambda x: x.get("priority",99))
         day_label = get_weekday_de(iso_date)
         cards = "".join(render_entry_card(s) for s in day_stmts_sorted)
         day_sections_html += f"""
@@ -367,19 +362,19 @@ def generate_html(statements, generated_at):
         </div>"""
 
     filter_items = "".join(
-        f'<li data-v="{v.replace(chr(34), chr(39))}">'
+        f'<li data-v="{v.replace(chr(34),chr(39))}">'
         f'<span>{v}</span><span class="filter-count">{c}</span></li>'
         for v, c in sorted(vorhaben_counts.items(), key=lambda x: -x[1])
     )
 
     gen_dt = datetime.fromisoformat(generated_at)
-    months_de = ["", "Januar", "Februar", "März", "April", "Mai", "Juni",
-                 "Juli", "August", "September", "Oktober", "November", "Dezember"]
+    months_de = ["","Januar","Februar","März","April","Mai","Juni",
+                 "Juli","August","September","Oktober","November","Dezember"]
     gen_str = f"{gen_dt.day}. {months_de[gen_dt.month]} {gen_dt.year}, {gen_dt.strftime('%H:%M')} Uhr"
     fields_subtitle = ("Energie &amp; Wasserstoff, Klimaschutz, EU-Binnenmarkt, EU-Gesetzgebung, "
                        "Bundestag, Wettbewerbsrecht, Politisches Leben/Parteien, Sonstige")
 
-    with open("scripts/template.html", "r", encoding="utf-8") as f:
+    with open("scripts/template.html","r",encoding="utf-8") as f:
         template = f.read()
 
     html = template.replace("{{DAY_SECTIONS}}", day_sections_html)
@@ -396,16 +391,17 @@ def generate_html(statements, generated_at):
 def main():
     print("=== Lobbyregister Monitor – Seitengenerierung ===")
 
-    statements = fetch_all_statements()
+    candidates = fetch_candidates()
+    statements = fetch_all_statements(candidates)
 
-    print(f"Relevante Stellungnahmen: {len(statements)}")
+    print(f"Relevante Stellungnahmen gesamt: {len(statements)}")
     if not statements:
         print("WARNUNG: Keine Einträge. Seite wird trotzdem generiert.")
 
     Path("docs").mkdir(exist_ok=True)
     generated_at = datetime.now().isoformat()
 
-    with open("docs/data.json", "w", encoding="utf-8") as f:
+    with open("docs/data.json","w",encoding="utf-8") as f:
         json.dump({
             "generated_at": generated_at,
             "statements": sorted(statements,
@@ -413,7 +409,7 @@ def main():
         }, f, ensure_ascii=False, indent=2)
 
     html = generate_html(statements, generated_at)
-    with open("docs/index.html", "w", encoding="utf-8") as f:
+    with open("docs/index.html","w",encoding="utf-8") as f:
         f.write(html)
 
     print(f"Seite generiert: docs/index.html ({len(statements)} Einträge)")

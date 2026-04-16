@@ -185,23 +185,9 @@ def check_site_reachable():
 
 
 def check_resend():
-    """Prüft ob der Resend API-Key noch gültig ist."""
-    try:
-        # Resend unterstützt kein GET auf /emails – stattdessen /domains abfragen
-        # was mit einem gültigen Key 200 zurückgibt
-        resp = requests.get(
-            "https://api.resend.com/domains",
-            headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
-            timeout=10
-        )
-        if resp.status_code == 401:
-            return False, "Resend API-Key ungültig oder abgelaufen"
-        if resp.status_code == 403:
-            return False, "Resend API-Key hat keine ausreichenden Berechtigungen"
-        # 200 oder anderer nicht-401 Status = Key gültig
-        return True, "Resend API-Key gültig"
-    except Exception as e:
-        return False, f"Resend nicht erreichbar: {e}"
+    """Resend-Key wird nicht aktiv geprüft – Test-Endpunkte sind im Free Plan gesperrt.
+    Stattdessen gilt: wenn die wöchentliche Mail ankommt, ist der Key gültig."""
+    return True, "Resend-Key wird nicht aktiv geprüft (Mail-Eingang als Indikator)"
 
 
 # ── Bericht zusammenstellen ────────────────────────────────────────────────────

@@ -15,6 +15,7 @@ Strategie:
 
 import json
 import os
+import re
 import requests
 from datetime import datetime, date
 from collections import defaultdict
@@ -28,10 +29,8 @@ API_KEY = os.environ.get("LOBBYREGISTER_API_KEY", "")
 SITE_URL = "https://bmwe-iiia4.github.io/lobbyregister-monitor"
 START_DATE = date(2026, 1, 1)
 
-# Empfänger: Schlüsselwörter im shortTitle/title der Bundesregierung
 TARGET_DEPT_KEYWORDS = ["BMWE", "BMWK", "Wirtschaft"]
 
-# V2-API Feldcodes (aktualisiert für R2.22)
 TARGET_FIELD_CODES = {
     "FOI_ENERGY_OVERALL", "FOI_ENERGY_RENEWABLE", "FOI_ENERGY_FOSSILE",
     "FOI_ENERGY_NET", "FOI_ENERGY_NUCLEAR", "FOI_ENERGY_OTHER",
@@ -76,7 +75,17 @@ SESSION.headers.update({
 DEFAULT_PARAMS = {"format": "json", "apikey": API_KEY}
 
 
-# ── Schritt 1: Alle Registereinträge per V2 API laden ──────────────────────────
+# ── Hilfsfunktionen ────────────────────────────────────────────────────────────
+
+def extract_sg_number(pdf_url):
+    """Extrahiert die SG-Nummer aus der PDF-URL."""
+    if not pdf_url:
+        return ""
+    match = re.search(r'(SG\d+)', pdf_url)
+    return match.group(1) if match else ""
+
+
+# ── Schritt 1: Alle Registereinträge laden ─────────────────────────────────────
 
 def fetch_all_register_entries():
     register_numbers = []
@@ -156,7 +165,7 @@ def fetch_and_filter_statements(register_numbers):
             skipped += 1
             continue
 
-        # Themenfelder auf Registereintrag-Ebene prüfen (Vorfilter)
+        # Themenfelder auf Registereintrag-Ebene prüfen
         entry_fields = extract_entry_fields(entry)
         entry_field_codes = {f["code"] for f in entry_fields}
         if not entry_field_codes & TARGET_FIELD_CODES:
@@ -178,9 +187,14 @@ def fetch_and_filter_statements(register_numbers):
 
         org_name = extract_org_name(entry)
         upload_date = extract_upload_date(entry)
+        register_entry_id = extract_register_entry_id(entry)
+        details_page_url = extract_details_page_url(entry)
 
         for stmt in stmts_list:
-            result = process_statement(stmt, reg_num, org_name, upload_date, entry_fields)
+            result = process_statement(
+                stmt, reg_num, org_name, upload_date,
+                entry_fields, register_entry_id, details_page_url
+            )
             if result:
                 all_statements.append(result)
 
@@ -213,9 +227,7 @@ def extract_entry_fields(entry):
 def extract_org_name(entry):
     identity = entry.get("lobbyistIdentity", {})
     if isinstance(identity, dict):
-        name = identity.get("name", "")
-        if name:
-            return name
+        return identity.get("name", "") or "Unbekannte Organisation"
     return "Unbekannte Organisation"
 
 
@@ -231,7 +243,22 @@ def extract_upload_date(entry):
     return None
 
 
-def process_statement(stmt, register_number, org_name, upload_date, entry_fields):
+def extract_register_entry_id(entry):
+    details = entry.get("registerEntryDetails", {})
+    if isinstance(details, dict):
+        return str(details.get("registerEntryId", ""))
+    return ""
+
+
+def extract_details_page_url(entry):
+    details = entry.get("registerEntryDetails", {})
+    if isinstance(details, dict):
+        return details.get("detailsPageUrl", "")
+    return ""
+
+
+def process_statement(stmt, register_number, org_name, upload_date,
+                      entry_fields, register_entry_id, details_page_url):
     if not isinstance(stmt, dict):
         return None
 
@@ -258,7 +285,6 @@ def process_statement(stmt, register_number, org_name, upload_date, entry_fields
         recips = rg.get("recipients", {})
         if not isinstance(recips, dict):
             continue
-        # Bundesregierung
         for fg in recips.get("federalGovernment", []):
             dept = fg.get("department", {})
             if isinstance(dept, dict):
@@ -272,7 +298,6 @@ def process_statement(stmt, register_number, org_name, upload_date, entry_fields
                     if kw.upper() in combined:
                         has_target_recipient = True
                         break
-        # Bundestag
         for p in recips.get("parliament", []):
             if isinstance(p, dict):
                 parl_name = p.get("de", "") or p.get("name", "")
@@ -297,23 +322,37 @@ def process_statement(stmt, register_number, org_name, upload_date, entry_fields
 
     priority = min((FIELD_PRIORITY.get(c, 99) for c in field_codes if c in FIELD_PRIORITY), default=99)
 
+    # Beschreibungstext – vollständig, kein Limit
     text_obj = stmt.get("text", {})
     summary = text_obj.get("text", "") if isinstance(text_obj, dict) else ""
 
-    project_number = str(stmt.get("regulatoryProjectNumber", ""))
+    # SG-Nummer aus PDF-URL extrahieren
     pdf_url = str(stmt.get("pdfUrl", ""))
     pdf_pages = int(stmt.get("pdfPageCount", 0) or 0)
+    sg_number = extract_sg_number(pdf_url)
+
+    # Stellungnahmen-Link: /stellungnahmengutachtensuche/{SG}/{registerEntryId}
+    statement_url = ""
+    if sg_number and register_entry_id:
+        statement_url = (
+            f"https://www.lobbyregister.bundestag.de"
+            f"/inhalte-der-interessenvertretung/stellungnahmengutachtensuche"
+            f"/{sg_number}/{register_entry_id}"
+        )
 
     return {
-        "statement_number": project_number,
         "register_number": str(register_number),
-        "regulatory_project_title": str(stmt.get("regulatoryProjectTitle", "Kein Titel")),
+        "register_entry_id": register_entry_id,
         "org_name": str(org_name),
+        "org_url": details_page_url,
+        "regulatory_project_title": str(stmt.get("regulatoryProjectTitle", "Kein Titel")),
         "sending_date": sending_date.isoformat() if sending_date else None,
         "upload_date": upload_date.isoformat() if upload_date else None,
         "pdf_url": pdf_url,
         "pdf_pages": pdf_pages,
-        "summary": str(summary)[:600],
+        "sg_number": sg_number,
+        "statement_url": statement_url,
+        "summary": str(summary),
         "recipients": recipients,
         "fields": relevant_fields,
         "priority": priority,
@@ -321,14 +360,6 @@ def process_statement(stmt, register_number, org_name, upload_date, entry_fields
 
 
 # ── HTML-Generierung ───────────────────────────────────────────────────────────
-
-def build_url(stmt):
-    rn = stmt.get("register_number", "")
-    base = "https://www.lobbyregister.bundestag.de/suche"
-    if rn:
-        return f"{base}/{rn}"
-    return base
-
 
 def format_date_de(iso_date):
     if not iso_date:
@@ -354,6 +385,7 @@ def get_weekday_de(iso_date):
 def render_entry_card(stmt):
     title = stmt["regulatory_project_title"].replace('"', '&quot;').replace('<', '&lt;').replace('>', '&gt;')
     org = stmt["org_name"].replace('<', '&lt;').replace('>', '&gt;')
+    org_url = stmt.get("org_url", "")
     sending = format_date_de(stmt.get("sending_date"))
     upload = format_date_de(stmt.get("upload_date"))
     summary = (stmt.get("summary", "") or "Kein Beschreibungstext verfügbar.")
@@ -362,29 +394,46 @@ def render_entry_card(stmt):
     fields = stmt.get("fields", [])
     pdf_url = stmt.get("pdf_url", "")
     pdf_pages = stmt.get("pdf_pages", 0)
-    stmt_url = build_url(stmt)
-    reg_number = stmt.get("register_number", "")
+    sg_number = stmt.get("sg_number", "")
+    statement_url = stmt.get("statement_url", "")
+
+    # Org-Name mit Link zum Registereintrag
+    if org_url:
+        org_html = f'<a href="{org_url}" target="_blank" style="color:#004B87;text-decoration:none">{org}</a>'
+    else:
+        org_html = org
 
     recip_badges = "".join(f'<span class="abadge">{r}</span>' for r in recipients)
     field_tags = "".join(f'<span class="tag">{f["label"]}</span>' for f in fields)
-    pdf_link = (f'<a href="{pdf_url}" target="_blank">↗ PDF herunterladen ({pdf_pages} Seiten)</a>'
-                if pdf_url else '<span style="color:#999">Kein PDF verfügbar</span>')
+
+    # Stellungnahmen-Link
+    if statement_url:
+        stmt_link = f'<a href="{statement_url}" target="_blank">↗ Link zur Stellungnahme im Lobbyregister</a>'
+    else:
+        stmt_link = '<span style="color:#999">Kein direkter Link verfügbar</span>'
+
+    # PDF-Link mit SG-Nummer
+    if pdf_url:
+        sg_label = f" ({sg_number})" if sg_number else ""
+        pdf_link = f'<a href="{pdf_url}" target="_blank">↗ PDF herunterladen{sg_label} ({pdf_pages} Seiten)</a>'
+    else:
+        pdf_link = '<span style="color:#999">Kein PDF verfügbar</span>'
 
     return f"""
     <div class="entry-card" data-vorhaben="{title}">
       <div class="row-title">{title}</div>
       <div class="meta-row">
-        <div class="mc grow"><strong>Bereitgestellt von</strong>{org}</div>
+        <div class="mc grow"><strong>Bereitgestellt von</strong>{org_html}</div>
         <div class="mc fixd"><strong>Datum Stellungnahme</strong>{sending}</div>
         <div class="mc fixd"><strong>Hochgeladen am</strong>{upload}</div>
       </div>
       <div class="meta-row">
         <div class="mc grow"><strong>Adressaten</strong>{recip_badges}</div>
-        <div class="mc grow"><strong>Themen</strong>{field_tags}</div>
+        <div class="mc grow"><strong>Themenfelder der Organisation</strong>{field_tags}</div>
       </div>
       <div class="row-full"><strong>Inhalt</strong>{summary}</div>
       <div class="link-row">
-        <div class="lc"><a href="{stmt_url}" target="_blank">↗ Lobbyregistereintrag ({reg_number})</a></div>
+        <div class="lc">{stmt_link}</div>
         <div class="lc">{pdf_link}</div>
       </div>
     </div>"""
@@ -444,12 +493,10 @@ def main():
     print(f"Startdatum-Filter: ab {START_DATE.isoformat()}")
 
     register_numbers = fetch_all_register_entries()
-
     if not register_numbers:
         print("WARNUNG: Keine Registereinträge geladen.")
 
     statements = fetch_and_filter_statements(register_numbers)
-
     print(f"Relevante Stellungnahmen gesamt: {len(statements)}")
 
     Path("docs").mkdir(exist_ok=True)

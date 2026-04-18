@@ -2,8 +2,8 @@ name: Lobbyregister Monitor
 
 on:
   schedule:
-    - cron: '0 5 * * *'   # Täglich um 6:00 Uhr MEZ (= 5:00 UTC im Winter, 4:00 UTC im Sommer)
-    # Hinweis: GitHub Actions nutzt UTC. Im Sommer (MESZ) bitte auf '0 4 * * *' ändern.
+    - cron: '0 4 * * *'   # Täglich um 6:00 Uhr MESZ (= 4:00 UTC im Sommer)
+    # Hinweis: GitHub Actions nutzt UTC. Im Winter (MEZ) auf '0 5 * * *' ändern.
   workflow_dispatch:       # Manueller Start jederzeit möglich
 
 env:
@@ -41,8 +41,10 @@ jobs:
       - name: Gemini-Anreicherung (Relevanzfilter + Zusammenfassungen)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
         run: python scripts/gemini_enrich.py
-        continue-on-error: true  # Monitor läuft auch ohne Gemini weiter
+        continue-on-error: true
 
       - name: HTML mit angereicherten Daten neu generieren
         run: python scripts/rebuild_html.py
@@ -70,13 +72,12 @@ jobs:
     name: Wöchentliche Mail versenden (montags)
     runs-on: ubuntu-latest
     needs: build-site
-    # Nur montags ausführen
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && startsWith(github.event.schedule, '0 5') && toJSON(github.event) != '{}')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && startsWith(github.event.schedule, '0 4') && toJSON(github.event) != '{}')
     steps:
       - name: Wochentag prüfen
         id: check_day
         run: |
-          DAY=$(date +%u)  # 1=Montag, 7=Sonntag
+          DAY=$(date +%u)
           echo "weekday=$DAY" >> $GITHUB_OUTPUT
           if [ "$DAY" = "1" ]; then
             echo "is_monday=true" >> $GITHUB_OUTPUT
@@ -111,7 +112,7 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
           LOBBYREGISTER_API_KEY: ${{ secrets.LOBBYREGISTER_API_KEY }}
-          SITE_URL: "https://bmwe-iiia4.github.io/lobbyregister-monitor"
+          SITE_URL: "https://lobbyregister-bot.de"
         run: python scripts/send_email.py
 
   health-check:
@@ -151,6 +152,6 @@ jobs:
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           LOBBYREGISTER_API_KEY: ${{ secrets.LOBBYREGISTER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          SITE_URL: "https://bmwe-iiia4.github.io/lobbyregister-monitor"
+          SITE_URL: "https://lobbyregister-bot.de"
         run: python scripts/health_check.py
         continue-on-error: true

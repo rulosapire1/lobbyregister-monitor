@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>Wartungsdokumentation – Lobbyregister-Monitor</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -41,7 +42,7 @@ code{background:#f0f4f8;border:1px solid #d0d8e4;padding:1px 5px;font-family:mon
 <p>Der Lobbyregister-Monitor ist ein automatisiertes System, das <strong>täglich</strong>:</p>
 <ul>
   <li>Stellungnahmen und Gutachten aus dem Lobbyregister des Deutschen Bundestages abruft</li>
-  <li>Einträge per KI (Google Gemini Flash) auf Energie-/Klimarelevanz prüft und Beschreibungstexte zusammenfasst</li>
+  <li>Einträge per KI (Google Gemini Flash 2.5 Lite) auf Energie-/Klimarelevanz prüft und Beschreibungstexte zusammenfasst</li>
   <li>Eine öffentlich zugängliche Übersichtsseite auf GitHub Pages aktualisiert</li>
 </ul>
 <p>Zusätzlich wird <strong>jeden Montag</strong>:</p>
@@ -53,7 +54,7 @@ code{background:#f0f4f8;border:1px solid #d0d8e4;padding:1px 5px;font-family:mon
 
 <div class="box">
   <strong>Öffentliche URL der Seite:</strong><br>
-  <a href="https://bmwe-iiia4.github.io/lobbyregister-monitor">https://bmwe-iiia4.github.io/lobbyregister-monitor</a><br><br>
+  <a href="https://lobbyregister-bot.de">https://lobbyregister-bot.de</a><br><br>
   <strong>GitHub Repository:</strong><br>
   <a href="https://github.com/BMWE-IIIA4/lobbyregister-monitor">https://github.com/BMWE-IIIA4/lobbyregister-monitor</a><br><br>
   <strong>GitHub Actions (Logs):</strong><br>
@@ -108,8 +109,8 @@ GitHub Repository → Settings → Secrets and variables → Actions.</p>
 <h3>Gemini API</h3>
 <ul>
   <li>Verwaltung: <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a></li>
-  <li>Genutztes Modell: <code>gemini-2.0-flash</code> (kostenloses Free Tier)</li>
-  <li>Limits Free Tier: 15 Requests/Minute, 1 Million Tokens/Tag</li>
+  <li>Genutztes Modell: <code>gemini-2.5-flash-lite</code> (kostenloses Free Tier)</li>
+  <li>Limits Free Tier: 30 Requests/Minute, 2.000 Requests/Tag</li>
   <li>Der Monitor funktioniert auch ohne Gemini – Einträge werden dann ungefiltert angezeigt</li>
 </ul>
 
@@ -190,7 +191,7 @@ wird bei signifikanten Fehlern eine Admin-Mail verschickt.</p>
   <li>Häufige Ursachen:
     <ul>
       <li><strong>API-Key abgelaufen:</strong> Neuen Key auf <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> erstellen und als <code>GEMINI_API_KEY</code> Secret eintragen</li>
-      <li><strong>Rate Limit:</strong> Free Tier hat 15 req/min – bei sehr vielen Einträgen kann es zu Verzögerungen kommen. Das Skript wartet automatisch und wiederholt.</li>
+      <li><strong>Rate Limit:</strong> Free Tier hat 30 req/min – bei sehr vielen Einträgen kann es zu Verzögerungen kommen. Das Skript wartet automatisch und wiederholt.</li>
       <li><strong>Modell nicht verfügbar:</strong> Google ändert gelegentlich Modellnamen. In <code>gemini_enrich.py</code> die Variable <code>GEMINI_MODEL</code> prüfen und ggf. anpassen.</li>
     </ul>
   </li>

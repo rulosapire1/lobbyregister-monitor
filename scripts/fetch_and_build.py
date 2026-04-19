@@ -91,6 +91,20 @@ def build_statement_url(sg_number):
             f"/inhalte-der-interessenvertretung/stellungnahmengutachtensuche"
             f"/{sg_number}")
 
+def fetch_real_pdf_url(page_url):
+    if not page_url:
+        return ""
+    try:
+        # Nutzt die bestehende globale SESSION für Wiederverwendung der Verbindung
+        resp = SESSION.get(page_url, timeout=10)
+        if resp.status_code == 200:
+            match = re.search(r'href="([^"]+\.pdf)"', resp.text)
+            if match:
+                path = match.group(1)
+                return f"https://www.lobbyregister.bundestag.de{path}" if path.startswith('/') else path
+    except Exception:
+        pass
+    return page_url # Fallback zur HTML-Seiten-URL
 
 # ── Schritt 1: Alle Registereinträge laden ─────────────────────────────────────
 
@@ -345,7 +359,8 @@ def process_statement(stmt, register_number, org_name, upload_date,
     summary = rp_descriptions.get(rp_number, "")
 
     # SG-Nummer und Links
-    pdf_url = str(stmt.get("pdfUrl", ""))
+    page_url = str(stmt.get("pdfUrl", ""))
+    pdf_url = fetch_real_pdf_url(page_url)
     pdf_pages = int(stmt.get("pdfPageCount", 0) or 0)
     sg_number = extract_sg_number(pdf_url)
     statement_url = build_statement_url(sg_number)

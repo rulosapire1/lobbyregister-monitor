@@ -4,9 +4,9 @@ fetch_and_build.py
 Ruft Stellungnahmen über die offizielle Lobbyregister API V2 ab.
 
 Strategie:
-1. Alle Registereinträge per /registerentries mit Cursor-Pagination laden
+1. Alle Registereinträge per /registerentries mit Cursor-Pagination laden (Pre-Filter).
 2. Für jeden Eintrag:
-   a) Themenfelder prüfen (activitiesAndInterests.fieldsOfInterest)
+   a) Themenfelder auf Stellungnahme/Regelungsvorhaben-Ebene prüfen (STRIKTER FILTER)
    b) Stellungnahmen extrahieren (statements)
    c) Beschreibungen aus regulatoryProjects zuordnen
    d) Empfänger- und Datumsfilter anwenden
@@ -107,7 +107,7 @@ def fetch_real_pdf_url(page_url):
     return page_url 
 
 
-# ── Schritt 1: Alle Registereinträge laden ─────────────────────────────────────
+# ── Schritt 1: Alle Registereinträge laden (Pre-Filter) ────────────────────────
 
 def fetch_all_register_entries():
     register_numbers = []
@@ -187,6 +187,7 @@ def fetch_and_filter_statements(register_numbers):
             skipped += 1
             continue
 
+        # Pre-Filter: Orga-Themenfelder prüfen (verhindert Verarbeitung irrelevanter Organisationen)
         entry_fields = extract_entry_fields(entry)
         entry_field_codes = {f["code"] for f in entry_fields}
         if not entry_field_codes & TARGET_FIELD_CODES:
@@ -208,12 +209,14 @@ def fetch_and_filter_statements(register_numbers):
         org_name = extract_org_name(entry)
         upload_date = extract_upload_date(entry)
         details_page_url = extract_details_page_url(entry)
-        rp_descriptions = build_rp_descriptions(entry)
+        
+        # NEU: Extrahiert Beschreibungen UND spezifische Themenfelder der Regelungsvorhaben
+        rp_lookup = build_rp_lookup(entry)
 
         for stmt in stmts_list:
             result = process_statement(
                 stmt, reg_num, org_name, upload_date,
-                entry_fields, details_page_url, rp_descriptions
+                entry_fields, details_page_url, rp_lookup
             )
             if result:
                 all_statements.append(result)
@@ -224,7 +227,7 @@ def fetch_and_filter_statements(register_numbers):
                   f"{skipped} Fehler")
 
     print(f"  {len(all_statements)} relevante Stellungnahmen gefunden.")
-    print(f"  ({no_relevant_fields} ohne Themenfeld, "
+    print(f"  ({no_relevant_fields} ohne Themenfeld auf Orga-Ebene, "
           f"{no_statements} ohne Stellungnahmen, {skipped} Fehler)")
     return all_statements
 
@@ -270,7 +273,8 @@ def extract_details_page_url(entry):
     return ""
 
 
-def build_rp_descriptions(entry):
+def build_rp_lookup(entry):
+    """Baut ein Lookup von regulatoryProjectNumber -> dict mit description und specific fields."""
     rp_data = entry.get("regulatoryProjects", {})
     if not isinstance(rp_data, dict):
         return {}
@@ -280,16 +284,31 @@ def build_rp_descriptions(entry):
         if isinstance(rp, dict):
             num = rp.get("regulatoryProjectNumber", "")
             desc = rp.get("description", "")
-            if num and desc:
-                lookup[num] = desc
+            
+            # Themenfelder auf Ebene des Regelungsvorhabens extrahieren
+            foi_list = rp.get("fieldsOfInterest", [])
+            fields = []
+            for f in foi_list:
+                if isinstance(f, dict):
+                    code = f.get("code", "")
+                    label = FIELD_LABELS.get(code) or f.get("de", "") or code
+                    if code:
+                        fields.append({"code": code, "label": label})
+                        
+            if num:
+                lookup[num] = {
+                    "description": desc,
+                    "fields": fields
+                }
     return lookup
 
 
 def process_statement(stmt, register_number, org_name, upload_date,
-                      entry_fields, details_page_url, rp_descriptions):
+                      entry_fields, details_page_url, rp_lookup):
     if not isinstance(stmt, dict):
         return None
 
+    # Datum extrahieren und filtern
     sending_date = None
     for rg in stmt.get("recipientGroups", []):
         sd = rg.get("sendingDate", "")
@@ -304,6 +323,7 @@ def process_statement(stmt, register_number, org_name, upload_date,
     if check_date and check_date < START_DATE:
         return None
 
+    # Empfänger extrahieren und filtern
     recipients = []
     has_target_recipient = False
     for rg in stmt.get("recipientGroups", []):
@@ -339,16 +359,43 @@ def process_statement(stmt, register_number, org_name, upload_date,
     if not has_target_recipient:
         return None
 
-    field_codes = {f["code"] for f in entry_fields}
-    relevant_fields = [f for f in entry_fields if f["code"] in TARGET_FIELD_CODES]
-    if not relevant_fields:
-        relevant_fields = entry_fields[:3]
-
-    priority = min((FIELD_PRIORITY.get(c, 99) for c in field_codes if c in FIELD_PRIORITY), default=99)
-
+    # --- STRIKTE THEMEN-FILTERUNG AUF STELLUNGNAHME-EBENE ---
     rp_number = stmt.get("regulatoryProjectNumber", "")
-    summary = rp_descriptions.get(rp_number, "")
+    rp_info = rp_lookup.get(rp_number, {})
+    stmt_fields = rp_info.get("fields", [])
+    summary = rp_info.get("description", "")
 
+    # Falls das Regelungsvorhaben keine Felder hat, schauen wir in der Stellungnahme direkt nach
+    if not stmt_fields:
+        foi_list = stmt.get("fieldsOfInterest", [])
+        for f in foi_list:
+            if isinstance(f, dict):
+                code = f.get("code", "")
+                label = FIELD_LABELS.get(code) or f.get("de", "") or code
+                if code:
+                    stmt_fields.append({"code": code, "label": label})
+
+    if stmt_fields:
+        stmt_field_codes = {f["code"] for f in stmt_fields}
+        # Härtester Filter: Stellungnahme hat eigene Felder, aber KEINES passt zu unseren Zielthemen
+        if not stmt_field_codes & TARGET_FIELD_CODES:
+            return None 
+
+        # Nur die für uns relevanten Felder auf der Karte anzeigen
+        relevant_fields = [f for f in stmt_fields if f["code"] in TARGET_FIELD_CODES]
+        display_fields = relevant_fields if relevant_fields else stmt_fields[:3]
+        priority_codes = stmt_field_codes
+    else:
+        # Fallback: Die Stellungnahme wurde komplett ohne Themenfelder eingereicht. 
+        # Wir nutzen die Orga-Felder zur Anzeige und überlassen der KI die finale Inhaltsprüfung.
+        display_fields = [f for f in entry_fields if f["code"] in TARGET_FIELD_CODES]
+        if not display_fields:
+            display_fields = entry_fields[:3]
+        priority_codes = {f["code"] for f in entry_fields}
+
+    priority = min((FIELD_PRIORITY.get(c, 99) for c in priority_codes if c in FIELD_PRIORITY), default=99)
+
+    # SG-Nummer und PDF-Scraping
     page_url = str(stmt.get("pdfUrl", ""))
     pdf_url = fetch_real_pdf_url(page_url)
     pdf_pages = int(stmt.get("pdfPageCount", 0) or 0)
@@ -368,7 +415,7 @@ def process_statement(stmt, register_number, org_name, upload_date,
         "statement_url": statement_url,
         "summary": summary,
         "recipients": recipients,
-        "fields": relevant_fields,
+        "fields": display_fields,
         "priority": priority,
     }
 
@@ -432,7 +479,7 @@ def render_entry_card(stmt):
       </div>
       <div class="meta-row two-col">
         <div class="mc half"><strong>Adressaten</strong>{recip_badges}</div>
-        <div class="mc half"><strong>Themenfelder der Organisation</strong>{field_tags}</div>
+        <div class="mc half"><strong>Themenfelder der Stellungnahme</strong>{field_tags}</div>
       </div>
       <div class="row-full"><strong>Inhalt</strong>{summary}</div>
       <div class="link-row">

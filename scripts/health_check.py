@@ -155,6 +155,27 @@ def check_gemini():
     except Exception as e:
         return False, f"Gemini API nicht erreichbar: {e}"
 
+def check_api_structure(api_key):
+    try:
+        resp = requests.get(
+            f"{API_BASE}/registerentries/R002297",
+            headers={"Authorization": f"ApiKey {api_key}"},
+            params={"format": "json"}, timeout=20
+        )
+        if resp.status_code != 200:
+            return False, "Strukturtest fehlgeschlagen: Test-Eintrag R002297 nicht abrufbar"
+        
+        data = resp.json()
+        if "statements" not in data:
+            return False, "Strukturfehler: Feld 'statements' fehlt im Registereintrag"
+            
+        stmts_data = data.get("statements", {})
+        if not isinstance(stmts_data, dict) or "statementsPresent" not in stmts_data:
+            return False, "Strukturfehler: Feld 'statementsPresent' fehlt oder hat falsches Format"
+            
+        return True, "API-Struktur (Stellungnahmen) verifiziert"
+    except Exception as e:
+        return False, f"Fehler beim Strukturtest: {e}"
 
 # ── Bericht ────────────────────────────────────────────────────────────────────
 
@@ -168,7 +189,13 @@ def build_report(results):
     else:
         issues.append({"severity": "FEHLER", "title": "Lobbyregister API nicht erreichbar",
                        "detail": api_msg, "action": f"1. {INFO_PAGE} prüfen\n2. Key in Secrets aktualisieren\n   → {SECRETS_URL}"})
-
+    struct_ok, struct_msg = results["api_struct"]
+    if struct_ok:
+        ok_items.append(("API-Struktur", struct_msg))
+    else:
+        issues.append({"severity": "FEHLER", "title": "API-Struktur geändert",
+                       "detail": struct_msg, "action": "JSON-Antwort manuell analysieren und fetch_and_build.py anpassen"})
+        
     new_key, key_msg = results["public_key"]
     if new_key:
         issues.append({"severity": "WARNUNG", "title": "API-Key möglicherweise geändert",
@@ -271,6 +298,7 @@ def main():
     print("=== Lobbyregister Monitor – Wöchentlicher Selbsttest ===")
     results = {}
     print("Prüfe API..."); results["api"] = check_api_reachable(LOBBYREGISTER_API_KEY)
+    print("Prüfe API-Struktur..."); results["api_struct"] = check_api_structure(LOBBYREGISTER_API_KEY)
     print("Prüfe API-Key..."); results["public_key"] = check_public_api_key()
     print("Prüfe YAML..."); results["yaml"] = check_yaml_version()
     print("Prüfe Seite..."); results["site"] = check_site_reachable()

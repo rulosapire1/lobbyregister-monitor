@@ -189,6 +189,7 @@ def build_report(results):
     else:
         issues.append({"severity": "FEHLER", "title": "Lobbyregister API nicht erreichbar",
                        "detail": api_msg, "action": f"1. {INFO_PAGE} prüfen\n2. Key in Secrets aktualisieren\n   → {SECRETS_URL}"})
+
     struct_ok, struct_msg = results["api_struct"]
     if struct_ok:
         ok_items.append(("API-Struktur", struct_msg))

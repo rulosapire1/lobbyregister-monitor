@@ -91,6 +91,7 @@ def build_statement_url(sg_number):
             f"/inhalte-der-interessenvertretung/stellungnahmengutachtensuche"
             f"/{sg_number}")
 
+
 def fetch_real_pdf_url(page_url):
     if not page_url:
         return ""
@@ -105,6 +106,7 @@ def fetch_real_pdf_url(page_url):
     except Exception:
         pass
     return page_url # Fallback zur HTML-Seiten-URL
+
 
 # ── Schritt 1: Alle Registereinträge laden ─────────────────────────────────────
 

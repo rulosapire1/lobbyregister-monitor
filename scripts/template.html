@@ -6,15 +6,15 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Lobbyregister-Monitor – BMWE</title>
 <style>
-/* Modernes CSS-Mockup */
+/* --- Modernes Design-System --- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #334155; background: #f8fafc; }
 a { color: #004B87; text-decoration: none; transition: color 0.2s; }
 a:hover { color: #003366; text-decoration: underline; }
-.page { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+.page { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 
 /* Header & Meta */
-.site-header { background: #004B87; padding: 1rem 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;}
+.site-header { background: #004B87; padding: 1rem 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
 .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
 .header-title { color: #fff; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
 .header-nav { display: flex; gap: 1.5rem; }
@@ -26,57 +26,65 @@ a:hover { color: #003366; text-decoration: underline; }
 .update-badge { color: #64748b; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;}
 .update-badge::before { content: ''; display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; }
 
-/* Angepasster Textblock */
+/* Strukturierter Textblock */
 .page-desc { background: #fff; padding: 1.5rem 0; border-bottom: 1px solid #e2e8f0; }
 .desc-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; color: #64748b; font-size: 0.9rem; line-height: 1.5; }
 .desc-line { margin-bottom: 0.25rem; }
 
-/* Layout */
+/* Layout-Grid */
 .layout { display: grid; grid-template-columns: 1fr 300px; gap: 2rem; align-items: start; padding-top: 1.5rem; }
 
-/* Sidebar */
+/* Sidebar & Filter */
 .sidebar { background: #fff; border-radius: 12px; padding: 1.5rem; position: sticky; top: 5.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
 .sidebar-title { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
 .sidebar-hint { font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; line-height: 1.4;}
 .filter-input { width: 100%; font-size: 0.875rem; padding: 0.6rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 1rem; outline: none; transition: border-color 0.2s; }
 .filter-input:focus { border-color: #004B87; }
 .filter-list { list-style: none; max-height: 50vh; overflow-y: auto; scrollbar-width: thin; }
-.filter-list li { font-size: 0.875rem; color: #475569; padding: 0.5rem 0.75rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 6px; margin-bottom: 2px;}
+.filter-list li { font-size: 0.875rem; color: #475569; padding: 0.5rem 0.75rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 6px; margin-bottom: 2px; transition: all 0.2s; }
 .filter-list li:hover { background: #f1f5f9; color: #0f172a; }
 .filter-list li.active { background: #004B87; color: #fff; font-weight: 600; }
 .filter-count { font-size: 0.75rem; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 12px; }
 .filter-list li.active .filter-count { background: rgba(255,255,255,0.2); color: #fff; }
-.reset-btn { font-size: 0.875rem; color: #ef4444; background: none; border: none; padding: 0.6rem; margin-top: 1rem; cursor: pointer; font-weight: 600; width: 100%; display: none; }
+.reset-btn { font-size: 0.875rem; color: #ef4444; background: none; border: none; padding: 0.6rem; margin-top: 1rem; cursor: pointer; font-weight: 600; width: 100%; border-radius: 6px; display: none; }
+.reset-btn:hover { background: #fef2f2; }
 
-/* Cards */
+/* Karten-Styling */
 .day-section { margin-bottom: 2.5rem; }
-.day-header { font-size: 0.875rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; }
+.day-header { font-size: 0.875rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
 
-.entry-card { background: #fff; border-radius: 12px; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; overflow: hidden;}
+.entry-card { background: #fff; border-radius: 12px; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; }
 .entry-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
 
-.row-title { padding: 1.25rem 1.5rem; font-size: 1.125rem; font-weight: 700; color: #0f172a; line-height: 1.4; border-left: 4px solid #004B87; }
+.row-title { padding: 1.25rem 1.5rem; font-size: 1.125rem; font-weight: 700; color: #0f172a; line-height: 1.4; border-left: 4px solid #004B87; background: #fff; }
 .meta-row { display: flex; flex-wrap: wrap; border-top: 1px solid #f1f5f9; background: #fafafa; }
-.meta-row.two-col { display: grid; grid-template-columns: 1fr 1fr; background: #fff;}
+.meta-row.two-col { display: grid; grid-template-columns: 1fr 1fr; background: #fff; }
 .mc { padding: 0.85rem 1.5rem; font-size: 0.875rem; border-right: 1px solid #f1f5f9; }
 .mc:last-child { border-right: none; }
 .mc strong { display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
 
-.tag { display: inline-block; font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.6rem; margin: 0.15rem 0.25rem 0.15rem 0; background: #f1f5f9; color: #475569; border-radius: 9999px; border: 1px solid #e2e8f0;}
+/* Pill-Tags */
+.tag { display: inline-block; font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.6rem; margin: 0.15rem 0.25rem 0.15rem 0; background: #f1f5f9; color: #475569; border-radius: 9999px; border: 1px solid #e2e8f0; }
 .abadge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; margin: 0.15rem 0.25rem 0.15rem 0; background: #eff6ff; color: #1e40af; border-radius: 9999px; border: 1px solid #bfdbfe; }
 
-.row-full { padding: 1.25rem 1.5rem; font-size: 0.95rem; color: #334155; border-top: 1px solid #f1f5f9; line-height: 1.6; }
-.row-full b { background: #fef9c3; padding: 0.1rem 0.2rem; border-radius: 2px; }
+/* Inhalt & KI-Highlights */
+.row-full { padding: 1.25rem 1.5rem; font-size: 0.95rem; color: #334155; border-top: 1px solid #f1f5f9; line-height: 1.6; background: #fff; }
+.row-full b { background: #fef9c3; padding: 0.1rem 0.2rem; border-radius: 2px; color: #0f172a; }
 
 .link-row { display: flex; border-top: 1px solid #f1f5f9; background: #f8fafc; }
 .lc { padding: 0.85rem 1.5rem; font-size: 0.875rem; font-weight: 500; border-right: 1px solid #f1f5f9; flex: 1; }
 .lc:last-child { border-right: none; }
 
-/* Pagination Controls */
+/* Pagination am Seitenende */
 .pagination { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
-.page-btn { background: #fff; border: 1px solid #004B87; color: #004B87; padding: 0.6rem 1.2rem; font-size: 0.875rem; cursor: pointer; font-weight: 600; border-radius: 6px; }
+.page-btn { background: #fff; border: 1px solid #004B87; color: #004B87; padding: 0.6rem 1.2rem; font-size: 0.875rem; cursor: pointer; font-weight: 600; border-radius: 6px; transition: all 0.2s; }
 .page-btn:hover:not(:disabled) { background: #004B87; color: #fff; }
-.page-btn:disabled { border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
+.page-btn:disabled { border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; background: #f8fafc; }
+.page-info { font-size: 0.875rem; color: #475569; font-weight: 500; }
+
+/* Footer */
+.site-footer { background: #0f172a; color: #94a3b8; font-size: 0.875rem; padding: 2.5rem 0; margin-top: 4rem; border-top: 4px solid #004B87; }
+.footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
 
 @media(max-width:768px){
   .layout { grid-template-columns: 1fr; }
@@ -93,7 +101,7 @@ a:hover { color: #003366; text-decoration: underline; }
     <div class="header-title">Übersicht der Einträge im Lobbyregister</div>
     <nav class="header-nav">
       <a href="hilfe.html">Nutzungsanleitung</a>
-      <a href="wartung.html">Wartung</a>
+      <a href="wartung.html">Wartungsdokumentation</a>
     </nav>
   </div>
 </header>
@@ -101,131 +109,9 @@ a:hover { color: #003366; text-decoration: underline; }
 <div class="meta-bar">
   <div class="meta-inner">
     <div class="update-badge">Zuletzt aktualisiert: {{GENERATED_AT}}</div>
-    <div class="meta-count">{{TOTAL_COUNT}} Einträge insgesamt (ab 1. Januar 2026)</div>
+    <div class="meta-count">{{TOTAL_COUNT}} Einträge insgesamt (ab 1. Jan. 2026)</div>
   </div>
 </div>
 
 <div class="page-desc">
   <div class="desc-inner">
-    <div class="desc-line">Stellungnahmen und Gutachten mit Adressat BMWE oder Bundestag</div>
-    <div class="desc-line"><strong>Themenfeldern: {{FIELDS_SUBTITLE}}</strong></div>
-    <div class="desc-line">Die angezeigten Themenfelder entsprechen den Angaben der jeweiligen Organisation im Lobbyregister.</div>
-    <div class="desc-line">Chronologisch absteigend sortiert, innerhalb eines Tages nach Themenrelevanz.</div>
-  </div>
-</div>
-
-<div class="page">
-  <div class="layout">
-    <div class="main">
-      <div id="entries-container">
-        {{DAY_SECTIONS}}
-      </div>
-      
-      <div class="pagination" id="pagination-controls">
-        <button class="page-btn" id="prev-page">← Neuere Einträge</button>
-        <span id="page-info">Seite 1 von 1</span>
-        <button class="page-btn" id="next-page">Ältere Einträge (Archiv) →</button>
-      </div>
-    </div>
-
-    <aside class="sidebar">
-      <div class="sidebar-title">Regelungsvorhaben filtern</div>
-      <div class="sidebar-hint">Klick zeigt nur Einträge dieses Vorhabens.</div>
-      <input class="filter-input" type="text" placeholder="Vorhaben suchen..." id="fsearch">
-      <ul class="filter-list" id="flist">{{FILTER_ITEMS}}</ul>
-      <button class="reset-btn" id="reset-btn">Alle anzeigen ✕</button>
-    </aside>
-  </div>
-</div>
-
-<script>
-(function(){
-  const cards = document.querySelectorAll('.entry-card');
-  const daySections = document.querySelectorAll('.day-section');
-  const flist = document.getElementById('flist');
-  const resetBtn = document.getElementById('reset-btn');
-  const fsearch = document.getElementById('fsearch');
-  const paginationControls = document.getElementById('pagination-controls');
-  const prevBtn = document.getElementById('prev-page');
-  const nextBtn = document.getElementById('next-page');
-  const pageInfo = document.getElementById('page-info');
-  
-  let activeFilter = null;
-  let currentPage = 0;
-  let pages = [];
-
-  function initPagination() {
-    pages = [];
-    const now = new Date();
-    const cutoff = new Date();
-    cutoff.setDate(now.getDate() - 7); // Letzte 7 Tage
-    
-    let firstPage = [];
-    let remaining = [];
-
-    daySections.forEach(ds => {
-      const sectionDate = new Date(ds.dataset.date);
-      if (sectionDate >= cutoff) { firstPage.push(ds); } 
-      else { remaining.push(ds); }
-    });
-
-    if (firstPage.length > 0) pages.push(firstPage);
-    for (let i = 0; i < remaining.length; i += 10) { // Rest in 10-Tages-Blöcken
-      pages.push(remaining.slice(i, i + 10));
-    }
-    if (pages.length === 0 && daySections.length > 0) pages.push(Array.from(daySections));
-    renderPage(0);
-  }
-
-  function renderPage(idx) {
-    if (activeFilter) return;
-    currentPage = idx;
-    daySections.forEach(ds => ds.style.display = 'none');
-    if (pages[idx]) pages[idx].forEach(ds => ds.style.display = '');
-    prevBtn.disabled = (currentPage === 0);
-    nextBtn.disabled = (currentPage === pages.length - 1 || pages.length === 0);
-    pageInfo.textContent = `Seite ${currentPage + 1} von ${Math.max(1, pages.length)}`;
-    window.scrollTo(0, 0);
-  }
-
-  function toggleFilter(v, li) {
-    if (activeFilter === v) { clear(); return; }
-    activeFilter = v;
-    paginationControls.style.display = 'none';
-    flist.querySelectorAll('li').forEach(x => x.classList.remove('active'));
-    li.classList.add('active');
-    cards.forEach(c => c.style.display = (c.dataset.vorhaben === v) ? '' : 'none');
-    daySections.forEach(ds => {
-      const hasVisible = [...ds.querySelectorAll('.entry-card')].some(c => c.style.display !== 'none');
-      ds.style.display = hasVisible ? '' : 'none';
-    });
-    resetBtn.style.display = 'block';
-  }
-
-  function clear() {
-    activeFilter = null;
-    paginationControls.style.display = 'flex';
-    cards.forEach(c => c.style.display = '');
-    flist.querySelectorAll('li').forEach(x => x.classList.remove('active'));
-    resetBtn.style.display = 'none';
-    renderPage(currentPage);
-  }
-
-  flist.querySelectorAll('li').forEach(li => {
-    li.addEventListener('click', () => toggleFilter(li.dataset.v, li));
-  });
-  resetBtn.addEventListener('click', clear);
-  prevBtn.addEventListener('click', () => renderPage(currentPage - 1));
-  nextBtn.addEventListener('click', () => renderPage(currentPage + 1));
-  fsearch.addEventListener('input', function() {
-    const q = this.value.toLowerCase();
-    flist.querySelectorAll('li').forEach(li => {
-      li.style.display = li.textContent.toLowerCase().includes(q) ? '' : 'none';
-    });
-  });
-
-  initPagination();
-})();
-</script>
-</body>
-</html>

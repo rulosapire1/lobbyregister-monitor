@@ -63,7 +63,10 @@ EU-ENERGIEPOLITIK & ENERGIEGESETZGEBUNG:
 - EU-Energieszenarien, EU-Zielarchitektur 2030/2040
 - Erneuerbare-Energien-Richtlinie (RED), EU-Notfallverordnungen
 - EU-Governance-Verordnung, Energieunion, NECP
-- Clean Industrial Deal, EU Green Deal, RePowerEU
+- Clean Industrial Deal, EU Green Deal, RePowerEU, CISAF, Temporary Crisis Framework
+- Verordnung (EU) 2019/943 des Europäischen Parlaments über den Elektrizitätsbinnenmarkt 
+- Richtlinie (EU) 2019/944 des Europäischen Parlaments mit gemeinsamen Vorschriften für den Elektrizitätsbinnenmarkt
+- ACER
 - EU-Beihilferecht Erneuerbare Energien, EU-Rahmenbedingungen EE-Fördersysteme
 - EU-Rahmenbedingungen erneuerbarer Wasserstoff (RFNBO)
 - Grenzüberschreitende EE-Kooperationsprojekte, Offshore-Kooperationen
@@ -86,6 +89,7 @@ STROMMARKTDESIGN & -REGULIERUNG:
 
 STROMERZEUGUNG & KRAFTWERKE:
 - Kohleausstieg, Kraftwerksstrategie, KWK (KWKG), Wasserstoffkraftwerke
+- StromVKG
 
 ERNEUERBARE ENERGIEN (NATIONAL):
 - EEG-Finanzierung, Besondere Ausgleichsregelung, PPA, Eigenverbrauch
@@ -99,7 +103,7 @@ KLIMASCHUTZ & ENERGIEWENDE:
 - Reform klimarelevanter Steuern/Abgaben/Umlagen
 
 ENERGIEPREISE & -KOSTEN:
-- Großhandelspreise, Endverbraucherpreise, internationale Energiepreisvergleiche
+- Großhandelspreise, Endverbraucherpreise, internationale Energiepreise
 
 ENERGIEMONITORING & -STATISTIK:
 - Monitoring-Berichte Energiewende, AGEE-Stat, Treibhausgasemissionen
@@ -171,7 +175,6 @@ def call_gemini(prompt, retries=MAX_RETRIES):
 
             text = text.strip()
             if text.startswith("```"):
-                text = re.sub(r"^```(?:json)?\s*", "", text)
                 text = re.sub(r"\s*```$", "", text)
 
             return json.loads(text)
@@ -204,8 +207,8 @@ def notify_admin_error(error_summary, stats):
     from datetime import date
 
     today = date.today().strftime("%d.%m.%Y")
-    secrets_url = "https://github.com/BMWE-IIIA4/lobbyregister-monitor/settings/secrets/actions"
-    actions_url = "https://github.com/BMWE-IIIA4/lobbyregister-monitor/actions"
+    secrets_url = "[https://github.com/BMWE-IIIA4/lobbyregister-monitor/settings/secrets/actions](https://github.com/BMWE-IIIA4/lobbyregister-monitor/settings/secrets/actions)"
+    actions_url = "[https://github.com/BMWE-IIIA4/lobbyregister-monitor/actions](https://github.com/BMWE-IIIA4/lobbyregister-monitor/actions)"
 
     html = f"""<!DOCTYPE html>
 <html lang="de"><head><meta charset="UTF-8"></head>
@@ -222,7 +225,7 @@ def notify_admin_error(error_summary, stats):
     <p style="font-size:12px;color:#333;margin-bottom:10px"><strong>Problem:</strong> {error_summary}</p>
     <p style="font-size:12px;color:#333;margin-bottom:10px"><strong>Auswirkung:</strong> Eintr&auml;ge werden ungefiltert angezeigt.</p>
     <p style="font-size:12px;color:#333;margin-bottom:10px"><strong>Was zu tun ist:</strong><br>
-      1. API-Key pr&uuml;fen: <a href="https://aistudio.google.com/apikey" style="color:#004B87">aistudio.google.com</a><br>
+      1. API-Key pr&uuml;fen: <a href="[https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)" style="color:#004B87">aistudio.google.com</a><br>
       2. Neuen Key in <a href="{secrets_url}" style="color:#004B87">GitHub Secrets</a> eintragen<br>
       3. <a href="{actions_url}" style="color:#004B87">Manuellen Testlauf</a> starten</p>
   </div>
@@ -230,7 +233,7 @@ def notify_admin_error(error_summary, stats):
 
     try:
         resp = requests.post(
-            "https://api.resend.com/emails",
+            "[https://api.resend.com/emails](https://api.resend.com/emails)",
             headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
             json={"from": "onboarding@resend.dev", "to": [ADMIN_EMAIL],
                   "subject": f"Lobbyregister-Monitor: Gemini fehlgeschlagen ({today})", "html": html},
@@ -278,9 +281,7 @@ Fasse die Beschreibung jedes Eintrags zusammen:
 - Laenge: 2 bis 5 Saetze, je nach Komplexitaet.
 - Inhalt: Was ist der Kern der Stellungnahme? Was wird gefordert, von wem?
 - Stil: Sachlich, informativ, ohne Wertung.
-- Schluesselwoerter: Markiere die 2-4 wichtigsten Fachbegriffe mit <b>-Tags.
-  Beispiel: "Die Stellungnahme fordert eine Anpassung der <b>Netzentgelte</b>
-  fuer <b>energieintensive Industrie</b>."
+- Hervorhebungen: Markiere die 2-4 wichtigsten Kernforderungen oder adressierten Hauptthemen mit <b>-Tags. Dies koennen einzelne Fachbegriffe oder kurze Wortgruppen sein (z.B. <b>Ausbau der Netzinfrastruktur</b> oder <b>Senkung der Netzentgelte</b>).
 - Falls Beschreibung leer: "Keine inhaltliche Beschreibung verfuegbar."
 
 Eintraege:
@@ -292,7 +293,7 @@ Antworte als JSON-Array mit genau {len(batch)} Objekten:
     "index": 1,
     "relevant": true,
     "relevanz_grund": "Kurze Begruendung (1 Satz)",
-    "zusammenfassung": "Zusammenfassung mit <b>fetten Keywords</b>"
+    "zusammenfassung": "Zusammenfassung mit <b>fetten Keywords und Forderungen</b>"
   }}
 ]
 

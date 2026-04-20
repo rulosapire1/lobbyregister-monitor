@@ -584,9 +584,9 @@ def main():
     # Merge: vorherige + neue, mit Deduplizierung
     all_statements = merge_statements(previous_statements, new_statements)
     all_statements.sort(
-        key=lambda x: (x.get("sending_date") or x.get("upload_date") or "0000-00-00"),
-        reverse=True
-    )
+    key=lambda x: (x.get("upload_date") or x.get("sending_date") or "0000-00-00"),
+    reverse=True
+)
 
     print(f"\nErgebnis: {len(all_statements)} Stellungnahmen gesamt "
           f"({len(new_statements)} neu, {len(previous_statements)} aus Cache)")
@@ -595,15 +595,15 @@ def main():
     Path("docs").mkdir(exist_ok=True)
     generated_at = datetime.now().isoformat()
 
-    with open("docs/data.json", "w", encoding="utf-8") as f:
-        json.dump({
-            "generated_at": generated_at,
-            "statements": sorted(
-                statements,
-                key=lambda x: (x.get("upload_date") or x.get("sending_date") or "0000-00-00"),
-                reverse=True
-            )
-        }, f, ensure_ascii=False, indent=2)
+with open("docs/data.json", "w", encoding="utf-8") as f:
+    json.dump({
+        "generated_at": generated_at,
+        "statements": sorted(
+            all_statements,
+            key=lambda x: (x.get("upload_date") or x.get("sending_date") or "0000-00-00"),
+            reverse=True
+        )
+    }, f, ensure_ascii=False, indent=2)
 
     html = generate_html(all_statements, generated_at)
     with open("docs/index.html", "w", encoding="utf-8") as f:

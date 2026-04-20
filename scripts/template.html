@@ -6,14 +6,12 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Lobbyregister-Monitor – BMWE</title>
 <style>
-/* --- Modernes Design-System --- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #334155; background: #f8fafc; }
 a { color: #004B87; text-decoration: none; transition: color 0.2s; }
 a:hover { color: #003366; text-decoration: underline; }
 .page { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 
-/* Header & Meta */
 .site-header { background: #004B87; padding: 1rem 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
 .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
 .header-title { color: #fff; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
@@ -23,21 +21,18 @@ a:hover { color: #003366; text-decoration: underline; }
 
 .meta-bar { background: #fff; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; }
 .meta-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; }
-.update-badge { color: #64748b; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;}
+.update-badge { color: #64748b; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; }
 .update-badge::before { content: ''; display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; }
 
-/* Strukturierter Textblock */
 .page-desc { background: #fff; padding: 1.5rem 0; border-bottom: 1px solid #e2e8f0; }
 .desc-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; color: #64748b; font-size: 0.9rem; line-height: 1.5; }
 .desc-line { margin-bottom: 0.25rem; }
 
-/* Layout-Grid */
 .layout { display: grid; grid-template-columns: 1fr 300px; gap: 2rem; align-items: start; padding-top: 1.5rem; }
 
-/* Sidebar & Filter */
 .sidebar { background: #fff; border-radius: 12px; padding: 1.5rem; position: sticky; top: 5.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
 .sidebar-title { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
-.sidebar-hint { font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; line-height: 1.4;}
+.sidebar-hint { font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; line-height: 1.4; }
 .filter-input { width: 100%; font-size: 0.875rem; padding: 0.6rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 1rem; outline: none; transition: border-color 0.2s; }
 .filter-input:focus { border-color: #004B87; }
 .filter-list { list-style: none; max-height: 50vh; overflow-y: auto; scrollbar-width: thin; }
@@ -49,7 +44,6 @@ a:hover { color: #003366; text-decoration: underline; }
 .reset-btn { font-size: 0.875rem; color: #ef4444; background: none; border: none; padding: 0.6rem; margin-top: 1rem; cursor: pointer; font-weight: 600; width: 100%; border-radius: 6px; display: none; }
 .reset-btn:hover { background: #fef2f2; }
 
-/* Karten-Styling */
 .day-section { margin-bottom: 2.5rem; }
 .day-header { font-size: 0.875rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
 
@@ -63,19 +57,23 @@ a:hover { color: #003366; text-decoration: underline; }
 .mc:last-child { border-right: none; }
 .mc strong { display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
 
-/* Pill-Tags */
 .tag { display: inline-block; font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.6rem; margin: 0.15rem 0.25rem 0.15rem 0; background: #f1f5f9; color: #475569; border-radius: 9999px; border: 1px solid #e2e8f0; }
 .abadge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; margin: 0.15rem 0.25rem 0.15rem 0; background: #eff6ff; color: #1e40af; border-radius: 9999px; border: 1px solid #bfdbfe; }
 
-/* Inhalt & KI-Highlights */
 .row-full { padding: 1.25rem 1.5rem; font-size: 0.95rem; color: #334155; border-top: 1px solid #f1f5f9; line-height: 1.6; background: #fff; }
 .row-full b { background: #fef9c3; padding: 0.1rem 0.2rem; border-radius: 2px; color: #0f172a; }
+.row-label { display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
 
 .link-row { display: flex; border-top: 1px solid #f1f5f9; background: #f8fafc; }
 .lc { padding: 0.85rem 1.5rem; font-size: 0.875rem; font-weight: 500; border-right: 1px solid #f1f5f9; flex: 1; }
 .lc:last-child { border-right: none; }
 
-/* Footer */
+.pagination { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
+.page-btn { background: #fff; border: 1px solid #004B87; color: #004B87; padding: 0.6rem 1.2rem; font-size: 0.875rem; cursor: pointer; font-weight: 600; border-radius: 6px; transition: all 0.2s; }
+.page-btn:hover:not(:disabled) { background: #004B87; color: #fff; }
+.page-btn:disabled { border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; background: #f8fafc; }
+.page-info { font-size: 0.875rem; color: #475569; font-weight: 500; }
+
 .site-footer { background: #0f172a; color: #94a3b8; font-size: 0.875rem; padding: 2.5rem 0; margin-top: 4rem; border-top: 4px solid #004B87; }
 .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
 
@@ -94,7 +92,6 @@ a:hover { color: #003366; text-decoration: underline; }
     <div class="header-title">Übersicht der Einträge im Lobbyregister</div>
     <nav class="header-nav">
       <a href="hilfe.html">Nutzungsanleitung</a>
-      <a href="wartung.html">Wartungsdokumentation</a>
     </nav>
   </div>
 </header>
@@ -108,88 +105,218 @@ a:hover { color: #003366; text-decoration: underline; }
 
 <div class="page-desc">
   <div class="desc-inner">
-    <div class="desc-line">Neue Stellungnahmen und Gutachten im Lobbyregister mit Adressat BMWE oder Bundestag.</div>
-    <div class="desc-line">Gefiltert nach: {{FIELDS_SUBTITLE}}.</div>
+    <div class="desc-line">Stellungnahmen und Gutachten mit Adressat BMWE oder Bundestag</div>
+    <div class="desc-line"><strong>Themenfelder: {{FIELDS_SUBTITLE}}</strong></div>
+    <div class="desc-line">Die angezeigten Themenfelder entsprechen den Angaben der jeweiligen Organisation im Lobbyregister.</div>
+    <div class="desc-line">Chronologisch absteigend sortiert, innerhalb eines Tages nach Themenrelevanz.</div>
   </div>
 </div>
 
-<div class="page layout">
-  <main class="content">
-    {{DAY_SECTIONS}}
-  </main>
-  <aside class="sidebar">
-    <div class="sidebar-title">Regelungsvorhaben</div>
-    <div class="sidebar-hint">Klicken zum Filtern</div>
-    <input type="text" class="filter-input" placeholder="Suchen..." id="filterSearch">
-    <ul class="filter-list" id="filterList">
-      {{FILTER_ITEMS}}
-    </ul>
-    <button class="reset-btn" id="resetFilter">Alle anzeigen ✕</button>
-  </aside>
+<div class="page">
+  <div class="layout">
+    <div class="main-content" id="main-content">
+      {{DAY_SECTIONS}}
+      <div class="pagination" id="pagination" style="display:none">
+        <button class="page-btn" id="prev-btn">← Zurück</button>
+        <span class="page-info" id="page-info"></span>
+        <button class="page-btn" id="next-btn">Weiter →</button>
+      </div>
+    </div>
+    <aside class="sidebar">
+      <div class="sidebar-title">Regelungsvorhaben</div>
+      <div class="sidebar-hint">Klicke auf ein Vorhaben, um nur dessen Stellungnahmen zu sehen.</div>
+      <input type="text" class="filter-input" id="filter-search" placeholder="Vorhaben suchen...">
+      <ul class="filter-list" id="filter-list">
+        {{FILTER_ITEMS}}
+      </ul>
+      <button class="reset-btn" id="reset-btn">Alle anzeigen ✕</button>
+    </aside>
+  </div>
 </div>
 
 <footer class="site-footer">
   <div class="footer-inner">
-    <div>Automatisch generiert. Daten: <a href="https://www.lobbyregister.bundestag.de" target="_blank" style="color:#cbd5e1">Lobbyregister des Deutschen Bundestages</a>.</div>
-    <div>Kontakt: <a href="mailto:martin.jahn@bmwe.bund.de" style="color:#cbd5e1">Martin Jahn, IIIA4</a> &middot; <a href="{{SITE_URL}}/wartung.html" style="color:#cbd5e1">Wartung</a></div>
+    <div>Automatisch generiert · Daten: <a href="https://www.lobbyregister.bundestag.de" style="color:#93c5fd">Lobbyregister des Deutschen Bundestages</a></div>
+    <div>
+      <a href="mailto:martin.jahn@bmwe.bund.de" style="color:#93c5fd">Kontakt: Martin Jahn, IIIA4</a> ·
+      <a href="wartung.html" style="color:#93c5fd">Wartungsdokumentation</a>
+    </div>
   </div>
 </footer>
 
 <script>
-  const filterList = document.getElementById('filterList');
-  const filterItems = Array.from(filterList.getElementsByTagName('li'));
-  const searchInput = document.getElementById('filterSearch');
-  const resetBtn = document.getElementById('resetFilter');
-  const cards = Array.from(document.getElementsByClassName('entry-card'));
-  const daySections = Array.from(document.getElementsByClassName('day-section'));
+(function() {
+  // -- Pagination --
+  var currentPage = 0;
+  var pages = [];
+  var filterActive = false;
 
-  let activeFilter = null;
+  function buildPages() {
+    var sections = document.querySelectorAll('.day-section');
+    var today = new Date();
+    var cutoff = new Date(today);
+    cutoff.setDate(cutoff.getDate() - 7);
+    cutoff.setHours(0,0,0,0);
 
-  function applyFilter() {
-    cards.forEach(card => {
-      if (!activeFilter || card.getAttribute('data-vorhaben') === activeFilter) {
-        card.style.display = '';
-      } else {
-        card.style.display = 'none';
+    var recentSections = [];
+    var archiveSections = [];
+
+    sections.forEach(function(s) {
+      var ds = s.getAttribute('data-date');
+      if (!ds || ds === 'unbekannt') { recentSections.push(s); return; }
+      var d = new Date(ds + 'T00:00:00');
+      if (d >= cutoff) { recentSections.push(s); }
+      else { archiveSections.push(s); }
+    });
+
+    pages = [];
+    if (recentSections.length > 0) pages.push(recentSections);
+
+    // Archiv: 10-Tage-Bloecke
+    if (archiveSections.length > 0) {
+      var block = [];
+      var blockStart = null;
+
+      for (var i = 0; i < archiveSections.length; i++) {
+        var ds = archiveSections[i].getAttribute('data-date');
+        var d = new Date(ds + 'T00:00:00');
+
+        if (blockStart === null) { blockStart = d; }
+
+        var diff = (blockStart - d) / (1000 * 60 * 60 * 24);
+        if (diff >= 10 && block.length > 0) {
+          pages.push(block);
+          block = [archiveSections[i]];
+          blockStart = d;
+        } else {
+          block.push(archiveSections[i]);
+        }
       }
-    });
+      if (block.length > 0) pages.push(block);
+    }
 
-    daySections.forEach(section => {
-      const hasVisibleCards = Array.from(section.getElementsByClassName('entry-card'))
-        .some(card => card.style.display !== 'none');
-      section.style.display = hasVisibleCards ? '' : 'none';
-    });
-
-    resetBtn.style.display = activeFilter ? 'block' : 'none';
+    if (pages.length === 0) {
+      // Fallback: alle Sections auf einer Seite
+      var all = Array.prototype.slice.call(sections);
+      if (all.length > 0) pages.push(all);
+    }
   }
 
-  filterItems.forEach(item => {
-    item.addEventListener('click', () => {
-      if (item.classList.contains('active')) {
-        item.classList.remove('active');
-        activeFilter = null;
-      } else {
-        filterItems.forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-        activeFilter = item.getAttribute('data-v');
-      }
-      applyFilter();
-    });
+  function showPage(idx) {
+    if (filterActive) return;
+    var sections = document.querySelectorAll('.day-section');
+    sections.forEach(function(s) { s.style.display = 'none'; });
+    if (pages[idx]) {
+      pages[idx].forEach(function(s) { s.style.display = ''; });
+    }
+    currentPage = idx;
+    updatePagination();
+  }
+
+  function updatePagination() {
+    var el = document.getElementById('pagination');
+    var prev = document.getElementById('prev-btn');
+    var next = document.getElementById('next-btn');
+    var info = document.getElementById('page-info');
+
+    if (filterActive || pages.length <= 1) {
+      el.style.display = 'none';
+      return;
+    }
+
+    el.style.display = 'flex';
+    prev.disabled = (currentPage === 0);
+    next.disabled = (currentPage === pages.length - 1);
+
+    if (currentPage === 0) {
+      info.textContent = 'Letzte 7 Tage \u00b7 Seite 1 von ' + pages.length;
+    } else {
+      info.textContent = 'Archiv \u00b7 Seite ' + (currentPage + 1) + ' von ' + pages.length;
+    }
+  }
+
+  document.getElementById('prev-btn').addEventListener('click', function() {
+    if (currentPage > 0) { showPage(currentPage - 1); window.scrollTo({top: 0, behavior: 'smooth'}); }
+  });
+  document.getElementById('next-btn').addEventListener('click', function() {
+    if (currentPage < pages.length - 1) { showPage(currentPage + 1); window.scrollTo({top: 0, behavior: 'smooth'}); }
   });
 
-  resetBtn.addEventListener('click', () => {
-    filterItems.forEach(i => i.classList.remove('active'));
+  // -- Filter --
+  var activeFilter = null;
+
+  function applyFilter(vorhaben) {
+    filterActive = true;
+    activeFilter = vorhaben;
+
+    // Alle Sections und Cards sichtbar machen
+    document.querySelectorAll('.day-section').forEach(function(s) { s.style.display = ''; });
+
+    // Karten filtern
+    document.querySelectorAll('.entry-card').forEach(function(c) {
+      var v = c.getAttribute('data-vorhaben');
+      c.style.display = (v === vorhaben) ? '' : 'none';
+    });
+
+    // Leere Tage ausblenden
+    document.querySelectorAll('.day-section').forEach(function(s) {
+      var visible = s.querySelectorAll('.entry-card[style=""], .entry-card:not([style])');
+      var hasVisible = false;
+      s.querySelectorAll('.entry-card').forEach(function(c) {
+        if (c.style.display !== 'none') hasVisible = true;
+      });
+      s.style.display = hasVisible ? '' : 'none';
+    });
+
+    // Sidebar aktualisieren
+    document.querySelectorAll('#filter-list li').forEach(function(li) {
+      li.classList.toggle('active', li.getAttribute('data-v') === vorhaben);
+    });
+    document.getElementById('reset-btn').style.display = 'block';
+    document.getElementById('pagination').style.display = 'none';
+  }
+
+  function resetFilter() {
+    filterActive = false;
     activeFilter = null;
-    applyFilter();
+
+    document.querySelectorAll('.entry-card').forEach(function(c) { c.style.display = ''; });
+    document.querySelectorAll('#filter-list li').forEach(function(li) { li.classList.remove('active'); });
+    document.getElementById('reset-btn').style.display = 'none';
+    document.getElementById('filter-search').value = '';
+    filterList('');
+
+    showPage(0);
+  }
+
+  // Sidebar-Klick
+  document.getElementById('filter-list').addEventListener('click', function(e) {
+    var li = e.target.closest('li');
+    if (!li) return;
+    var v = li.getAttribute('data-v');
+    if (activeFilter === v) { resetFilter(); }
+    else { applyFilter(v); }
   });
 
-  searchInput.addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    filterItems.forEach(item => {
-      const text = item.querySelector('span').textContent.toLowerCase();
-      item.style.display = text.includes(term) ? 'flex' : 'none';
-    });
+  document.getElementById('reset-btn').addEventListener('click', resetFilter);
+
+  // Suchfeld
+  document.getElementById('filter-search').addEventListener('input', function() {
+    filterList(this.value);
   });
+
+  function filterList(query) {
+    var q = query.toLowerCase();
+    document.querySelectorAll('#filter-list li').forEach(function(li) {
+      var text = li.querySelector('span').textContent.toLowerCase();
+      li.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+
+  // -- Init --
+  buildPages();
+  showPage(0);
+})();
 </script>
 </body>
 </html>

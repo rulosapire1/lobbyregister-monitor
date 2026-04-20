@@ -32,7 +32,7 @@ API_KEY = os.environ.get("LOBBYREGISTER_API_KEY", "")
 SITE_URL = "https://lobbyregister-bot.de"
 START_DATE = date(2026, 1, 1)
 
-TARGET_DEPT_KEYWORDS = ["BMWE", "BMWK", "Wirtschaft"]
+TARGET_DEPT_KEYWORDS = ["BMWE", "BMWK", "Wirtschaft", "BKAmt", "Kanzleramt", "BMUKN", "BMUV", "Umwelt", "BMF", "Finanzen"]
 
 TARGET_FIELD_CODES = {
     "FOI_ENERGY_OVERALL", "FOI_ENERGY_RENEWABLE", "FOI_ENERGY_FOSSILE",

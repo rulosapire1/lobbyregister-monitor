@@ -7,29 +7,45 @@
 <title>Nutzungsanleitung – Lobbyregister-Monitor</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#222;background:#f5f7fa}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:14px;line-height:1.6;color:#334155;background:#f8fafc}
+a{color:#004B87;text-decoration:none}
+a:hover{color:#003366;text-decoration:underline}
+.site-header{background:#004B87;padding:1rem 0;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
+.header-inner{max-width:860px;margin:0 auto;padding:0 1.5rem;display:flex;justify-content:space-between;align-items:center}
+.header-title{color:#fff;font-size:1.25rem;font-weight:700}
+.header-nav a{font-size:0.875rem;color:#e2e8f0;font-weight:500}
+.header-nav a:hover{color:#fff;text-decoration:none}
 .page{max-width:860px;margin:0 auto;padding:2rem 1.25rem}
-h1{font-size:22px;color:#003366;margin-bottom:.5rem}
-h2{font-size:16px;color:#004B87;margin:2rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid #c5d5e8}
-h3{font-size:14px;font-weight:700;color:#003366;margin:1.25rem 0 .4rem}
-p{margin-bottom:.75rem;color:#444}
-ul,ol{margin:.5rem 0 .75rem 1.5rem;color:#444}
+h1{font-size:22px;color:#0f172a;margin-bottom:.5rem}
+h2{font-size:16px;color:#004B87;margin:2rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid #e2e8f0}
+h3{font-size:14px;font-weight:700;color:#0f172a;margin:1.25rem 0 .4rem}
+p{margin-bottom:.75rem;color:#475569}
+ul,ol{margin:.5rem 0 .75rem 1.5rem;color:#475569}
 li{margin-bottom:.3rem}
-.box{background:#fff;border:1px solid #d0d8e4;border-left:3px solid #004B87;padding:1rem 1.25rem;margin:1rem 0}
-.warn{background:#fff8e1;border:1px solid #ffe082;border-left:3px solid #f9a825;padding:1rem 1.25rem;margin:1rem 0}
-.back{display:inline-block;margin-bottom:1.5rem;font-size:12px;color:#004B87;text-decoration:none}
+.box{background:#fff;border:1px solid #e2e8f0;border-left:3px solid #004B87;padding:1rem 1.25rem;margin:1rem 0;border-radius:6px}
+.warn{background:#fefce8;border:1px solid #fde047;border-left:3px solid #eab308;padding:1rem 1.25rem;margin:1rem 0;border-radius:6px}
 table{width:100%;border-collapse:collapse;margin:.75rem 0;font-size:13px}
 th{background:#004B87;color:#fff;padding:7px 12px;text-align:left}
-td{padding:7px 12px;border-bottom:1px solid #e0e8f0;vertical-align:top}
-tr:nth-child(even) td{background:#f5f7fa}
+td{padding:7px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+tr:nth-child(even) td{background:#f8fafc}
+.back{display:inline-block;margin-bottom:1.5rem;font-size:0.8rem;color:#64748b}
 </style>
 </head>
 <body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-title">Lobbyregister-Monitor</div>
+    <nav class="header-nav">
+      <a href="index.html">Übersicht</a>
+    </nav>
+  </div>
+</header>
+
 <div class="page">
-<a class="back" href="index.html">← Zurück zur Übersicht</a>
+<a class="back" href="index.html">&larr; Zurück zur Übersicht</a>
 
 <h1>Nutzungsanleitung</h1>
-<p style="color:#888;font-size:12px">Lobbyregister-Monitor · BMWE Unterabteilung IIIA</p>
 
 <h2>Was zeigt diese Seite?</h2>
 <p>Diese Seite zeigt automatisch alle neuen <strong>Stellungnahmen und Gutachten</strong>
@@ -41,11 +57,11 @@ relevant sind.</p>
 
 <h3>Empfängergruppen</h3>
 <ul>
-  <li>Bundesministerium für Wirtschaft und Energie (BMWE) – 21. Wahlperiode</li>
-  <li>Bundestag – 21. Wahlperiode</li>
+  <li>Bundesministerium für Wirtschaft und Energie (BMWE)</li>
+  <li>Bundestag</li>
 </ul>
 
-<h3>Themenfelder (Interessen- und Vorhabenbereiche)</h3>
+<h3>Themenfelder</h3>
 <table>
   <tr><th>Themenfeld</th><th>Priorität</th></tr>
   <tr><td>Energie &amp; Wasserstoff (inkl. Erneuerbare, Strom, Gas)</td><td>Hoch – erscheint zuerst</td></tr>
@@ -57,69 +73,58 @@ relevant sind.</p>
   <tr><td>Sonstige Interessenbereiche</td><td>Niedrig</td></tr>
 </table>
 
-<p>Einträge, die mehrere Themenfelder abdecken, werden dem Themenfeld mit der höchsten
-Priorität zugeordnet.</p>
+<h3>Zweistufige Filterung</h3>
+<p>Die Filterung erfolgt in zwei Stufen: Zuerst werden Organisationen ohne Energiebezug
+ausgeschlossen (Pre-Filter). Anschließend werden die Themenfelder auf Ebene der einzelnen
+Stellungnahme geprüft (strikter Filter). So werden irrelevante Einträge auch bei
+breit aufgestellten Organisationen zuverlässig aussortiert.</p>
 
 <h3>KI-gestützte Relevanzfilterung</h3>
-<p>Einträge in den breiten Kategorien (Wettbewerbsrecht, EU-Gesetzgebung, Politisches Leben/Parteien,
-Sonstige) werden zusätzlich automatisch auf ihren Bezug zu den Themen Energiepolitik,
-Klimaschutz und Energiewirtschaft geprüft. Einträge ohne erkennbaren Energie-/Klimabezug
-werden aussortiert, um die Übersicht auf die für die Unterabteilung IIIA relevanten
-Inhalte zu fokussieren.</p>
+<p>Einträge in den breiteren Kategorien werden zusätzlich automatisch auf ihren Bezug
+zu Energiepolitik, Klimaschutz und Energiewirtschaft geprüft. Einträge ohne erkennbaren
+Bezug werden aussortiert.</p>
 <p>Einträge im Themenfeld <strong>Energie &amp; Wasserstoff</strong> sind davon nicht
 betroffen und werden immer angezeigt.</p>
 
 <div class="warn">
   <strong>Hinweis zum gelben Warnbalken:</strong> Sollte auf der Übersichtsseite ein
-  gelber Hinweis erscheinen, dass die KI-gestützte Filterung nicht durchgeführt werden
-  konnte, werden vorübergehend alle Einträge ungefiltert angezeigt. Die Filterung wird
-  beim nächsten regulären Durchlauf automatisch wieder aktiv.
+  gelber Hinweis erscheinen oder einzelne Einträge mit „KI-Prüfung ausstehend" markiert
+  sein, konnten diese noch nicht per KI geprüft werden. Die Prüfung wird beim nächsten
+  Durchlauf automatisch nachgeholt.
 </div>
 
 <h2>Wie lese ich die Einträge?</h2>
 <p>Jeder Eintrag besteht aus fünf Zeilen:</p>
 
 <div class="box">
-  <p><strong>Zeile 1 (grau hinterlegt):</strong> Regelungsvorhaben – der Gegenstand der Interessenvertretung</p>
+  <p><strong>Zeile 1:</strong> Regelungsvorhaben – der Gegenstand der Interessenvertretung</p>
   <p><strong>Zeile 2:</strong> Bereitgestellt von (Organisation) · Datum der Stellungnahme · Hochgeladen am</p>
   <p><strong>Zeile 3:</strong> Adressaten (blau) · Themenfelder (grau)</p>
   <p><strong>Zeile 4:</strong> Inhalt – Zusammenfassung der Stellungnahme</p>
   <p><strong>Zeile 5:</strong> Links zum Lobbyregistereintrag und zur PDF der Stellungnahme</p>
 </div>
 
-<p><strong>Datum der Stellungnahme</strong> = wann die Stellungnahme abgegeben wurde.<br>
-<strong>Hochgeladen am</strong> = wann sie ins Lobbyregister eingestellt wurde. Diese Daten können voneinander abweichen.</p>
-
 <h3>Beschreibungstexte und KI-Zusammenfassungen</h3>
-<p>Die Beschreibungstexte in den Einträgen werden automatisch per KI (Google Gemini)
-auf zwei prägnante Sätze zusammengefasst. Die Zusammenfassungen geben den Kern der
-Stellungnahme sachlich wieder. Die vollständigen Originaltexte sind jederzeit über
-den Link zum Lobbyregistereintrag oder die PDF einsehbar.</p>
+<p>Die Beschreibungstexte werden automatisch per KI auf zwei bis fünf
+prägnante Sätze zusammengefasst, mit hervorgehobenen Schlüsselbegriffen.
+Die vollständigen Originaltexte sind jederzeit über den Link zum
+Lobbyregistereintrag oder die PDF einsehbar.</p>
 
 <h2>Regelungsvorhaben filtern</h2>
-<p>In der rechten Seitenleiste sind alle in den aktuellen Einträgen vorkommenden
-Regelungsvorhaben aufgelistet. Ein Klick auf ein Vorhaben blendet alle anderen
-Einträge aus – nur die Stellungnahmen zu diesem Vorhaben bleiben sichtbar.</p>
+<p>In der rechten Seitenleiste sind alle vorkommenden Regelungsvorhaben aufgelistet.
+Ein Klick blendet alle anderen Einträge aus. Die Seitennavigation (Pagination) wird
+dabei automatisch deaktiviert, damit alle Treffer sichtbar sind.</p>
 <p>Erneuter Klick oder „Alle anzeigen ✕" hebt den Filter auf.</p>
-<p>Mit dem Suchfeld oben in der Seitenleiste lässt sich die Liste der Regelungsvorhaben
-nach Stichworten durchsuchen.</p>
+
+<h2>Seitennavigation</h2>
+<p>Auf der ersten Seite werden die Einträge der letzten 7 Tage angezeigt.
+Ältere Einträge sind über die Archiv-Navigation am Seitenende erreichbar,
+gruppiert in Blöcke von je 10 Tagen.</p>
 
 <h2>Aktualisierung</h2>
-<p>Die Seite wird <strong>täglich um ca. 6:00 Uhr</strong> automatisch mit neuen Einträgen
-aktualisiert. Das Datum und die Uhrzeit der letzten Aktualisierung stehen oben auf der Seite.</p>
-<p>Zusätzlich wird jeden <strong>Montag</strong> eine <strong>Zusammenfassungs-Mail</strong>
+<p>Die Seite wird <strong>täglich um ca. 6:00 Uhr</strong> automatisch aktualisiert.
+Zusätzlich wird jeden <strong>Montag</strong> eine <strong>Zusammenfassungs-Mail</strong>
 mit den Einträgen der vergangenen Woche verschickt.</p>
-
-<h2>Direktlink zum Lobbyregister</h2>
-<p>Jeder Eintrag enthält einen direkten Link zum entsprechenden Registereintrag auf
-lobbyregister.bundestag.de sowie – wenn vorhanden – zur PDF der Stellungnahme.</p>
-
-<h2>Fragen und Änderungswünsche</h2>
-<div class="box">
-  Bei Fragen, Problemen oder Änderungswünschen (z.B. neue Themenfelder, andere Empfänger):<br>
-  <strong>Martin Jahn, IIIA4</strong> ·
-  <a href="mailto:martin.jahn@bmwe.bund.de">martin.jahn@bmwe.bund.de</a>
-</div>
 
 </div>
 </body>

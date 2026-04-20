@@ -432,7 +432,7 @@ def render_entry_card(stmt):
         f'<div class="mc half"><strong>Adressaten</strong>{recip_badges}</div>'
         f'<div class="mc half"><strong>Themenfelder der Stellungnahme</strong>{field_tags}</div>'
         f'</div>'
-        f'<div class="row-full"><strong>Inhalt</strong>{summary}</div>'
+        f'<div class="row-full"><strong>Inhalt</strong><br>{summary}</div>'
         f'<div class="link-row">'
         f'<div class="lc">{stmt_link}</div>'
         f'<div class="lc">{pdf_link}</div>'

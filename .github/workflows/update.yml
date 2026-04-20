@@ -32,12 +32,13 @@ jobs:
       - name: Abhaengigkeiten installieren
         run: pip install requests
 
-      - name: Daten-Cache wiederherstellen (data.json + gemini_cache.json)
+      - name: Daten-Cache wiederherstellen
         uses: actions/cache@v4
         with:
           path: |
             docs/data.json
             docs/gemini_cache.json
+            docs/run_history.json
           key: lobbyregister-data-${{ github.run_id }}
           restore-keys: |
             lobbyregister-data-
@@ -53,6 +54,10 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
         run: python scripts/gemini_enrich.py
+        continue-on-error: true
+
+      - name: Workflow-Protokoll speichern
+        run: python scripts/save_run_log.py
         continue-on-error: true
 
       - name: data.json fuer Mail-Job speichern

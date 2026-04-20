@@ -50,7 +50,7 @@ code{background:#f0f4f8;border:1px solid #d0d8e4;padding:1px 5px;font-family:mon
   <li>Eine wöchentliche Zusammenfassungs-Mail über Resend versendet</li>
   <li>Ein Selbsttest (Health-Check) durchgeführt und bei Problemen eine Admin-Mail verschickt</li>
 </ul>
-<p>Das System läuft vollautomatisch jeden Tag um <strong>6:00 Uhr MEZ</strong> (= 5:00 Uhr UTC).</p>
+<p>Das System läuft vollautomatisch jeden Tag um <strong>6:00 Uhr MESZ</strong> (= 4:00 Uhr UTC).</p>
 
 <div class="box">
   <strong>Öffentliche URL der Seite:</strong><br>
@@ -119,14 +119,14 @@ GitHub Repository → Settings → Secrets and variables → Actions.</p>
 <table class="secret-table">
   <tr><th>Datei</th><th>Funktion</th></tr>
   <tr><td><code>.github/workflows/update.yml</code></td><td>GitHub Actions Workflow – steuert den automatischen Tagesablauf</td></tr>
-  <tr><td><code>scripts/fetch_and_build.py</code></td><td>Ruft Daten vom Lobbyregister ab und generiert die HTML-Seite</td></tr>
-  <tr><td><code>scripts/gemini_enrich.py</code></td><td>KI-Relevanzfilterung und Zusammenfassung per Gemini Flash Lite</td></tr>
-  <tr><td><code>scripts/rebuild_html.py</code></td><td>Generiert HTML nach Gemini-Anreicherung neu (inkl. Warnhinweis bei Ausfall)</td></tr>
+  <tr><td><code>scripts/fetch_and_build.py</code></td><td>Ruft Daten vom Lobbyregister ab und generiert die initiale HTML-Seite</td></tr>
+  <tr><td><code>scripts/gemini_enrich.py</code></td><td>KI-Relevanzfilterung, Zusammenfassung per Gemini, HTML-Neugenerierung mit Pending-Banner</td></tr>
   <tr><td><code>scripts/send_email.py</code></td><td>Liest die gespeicherten Daten und versendet die Wochenmail (montags)</td></tr>
   <tr><td><code>scripts/health_check.py</code></td><td>Wöchentlicher Selbsttest: API, Gemini, Resend, Seite (montags)</td></tr>
   <tr><td><code>scripts/template.html</code></td><td>HTML-Vorlage für die Übersichtsseite</td></tr>
   <tr><td><code>docs/index.html</code></td><td>Generierte Seite (wird automatisch überschrieben)</td></tr>
   <tr><td><code>docs/data.json</code></td><td>Zwischengespeicherte API-Daten inkl. Gemini-Ergebnisse (wird automatisch überschrieben)</td></tr>
+  <tr><td><code>docs/gemini_cache.json</code></td><td>Lokaler Cache für bereits geprüfte Stellungnahmen (per GitHub Actions Cache persistiert)</td></tr>
   <tr><td><code>docs/hilfe.html</code></td><td>Nutzungsanleitung</td></tr>
   <tr><td><code>docs/wartung.html</code></td><td>Diese Seite</td></tr>
 </table>
@@ -134,33 +134,39 @@ GitHub Repository → Settings → Secrets and variables → Actions.</p>
 <h2>4. Ablauf eines täglichen Durchlaufs</h2>
 <p>Der GitHub Actions Workflow führt täglich folgende Schritte aus:</p>
 <ol>
-  <li><strong>fetch_and_build.py</strong> – Daten vom Lobbyregister abrufen, filtern, <code>data.json</code> und <code>index.html</code> generieren</li>
-  <li><strong>gemini_enrich.py</strong> – Stellungnahmen per Gemini auf Relevanz prüfen und Beschreibungen zusammenfassen. Schreibt Ergebnisse zurück in <code>data.json</code>. Bei Fehler: Originaldaten bleiben erhalten, Warnhinweis wird gesetzt, Admin wird per Mail benachrichtigt.</li>
-  <li><strong>rebuild_html.py</strong> – <code>index.html</code> aus der angereicherten <code>data.json</code> neu generieren. Bei Gemini-Ausfall wird ein gelber Warnbalken eingefügt.</li>
+  <li><strong>Gemini-Cache laden</strong> – Bereits geprüfte Stellungnahmen werden aus dem GitHub Actions Cache wiederhergestellt, um API-Quota zu schonen.</li>
+  <li><strong>fetch_and_build.py</strong> – Daten vom Lobbyregister abrufen, nach Themenfeld und Empfänger filtern, <code>data.json</code> und initiale <code>index.html</code> generieren.</li>
+  <li><strong>gemini_enrich.py</strong> – Neue Stellungnahmen per Gemini auf Relevanz prüfen und Beschreibungen zusammenfassen. Ergebnisse werden im Cache gespeichert. Bereits gecachte Einträge werden übersprungen. Bei Quota-Erschöpfung: sofortiger Abbruch (Fail-Fast), ungeprüfte Einträge erhalten ein „Pending"-Badge. HTML wird mit aktuellen Daten neu generiert (inkl. Pending-Banner).</li>
   <li><strong>GitHub Pages Deploy</strong> – Seite veröffentlichen</li>
   <li><strong>send_email.py</strong> (nur montags) – Wochenmail versenden</li>
   <li><strong>health_check.py</strong> (nur montags) – Selbsttest durchführen</li>
 </ol>
 
 <h2>5. Gefilterte Daten – was wird abgerufen?</h2>
-<p>Das Skript ruft alle Registereinträge über die Lobbyregister API v2 ab und filtert nach:</p>
+<p>Das Skript ruft alle Registereinträge über die Lobbyregister API v2 ab und filtert in zwei Stufen:</p>
+<ul>
+  <li><strong>Pre-Filter (Orga-Ebene):</strong> Organisationen ohne jeglichen Energiebezug werden ausgeschlossen</li>
+  <li><strong>Strikter Filter (Stellungnahme-Ebene):</strong> Nur Stellungnahmen mit relevanten Themenfeldern passieren den Filter. Orga-Felder dienen nur als Fallback.</li>
+</ul>
+<p>Weitere Filterkriterien:</p>
 <ul>
   <li><strong>Empfänger:</strong> BMWE oder Bundestag</li>
   <li><strong>Themenfelder:</strong> Energie, Klimaschutz, EU-Binnenmarkt, EU-Gesetzgebung, Bundestag, Wettbewerbsrecht, Politisches Leben/Parteien, Sonstige</li>
   <li><strong>Zeitraum:</strong> ab 1. Januar 2026</li>
 </ul>
 <p>Um die Filter zu ändern, müssen in <code>scripts/fetch_and_build.py</code> die Variablen
-<code>FIELD_PRIORITY</code>, <code>TARGET_RECIPIENTS</code> und <code>START_DATE</code> angepasst werden.</p>
+<code>FIELD_PRIORITY</code>, <code>TARGET_FIELD_CODES</code> und <code>START_DATE</code> angepasst werden.</p>
 
 <h3>KI-Relevanzfilterung (Gemini)</h3>
-<p>Nach dem Datenabruf prüft <code>gemini_enrich.py</code> alle Einträge der Priorität 2 und 3
-(Klimaschutz, EU, Wettbewerbsrecht, Parteien, Sonstige) auf Bezug zum Aufgabenportfolio
+<p>Nach dem Datenabruf prüft <code>gemini_enrich.py</code> alle Einträge auf Bezug zum Aufgabenportfolio
 der Unterabteilung IIIA. Der Relevanzkatalog ist direkt im Skript als <code>RELEVANZ_KATALOG</code>
 hinterlegt und kann dort angepasst werden. Einträge der Priorität 1 (Energie/Wasserstoff)
 werden nie gefiltert.</p>
 <p>Zusätzlich werden alle Beschreibungstexte per Gemini auf 2–5 Sätze zusammengefasst,
 mit fett markierten Schlüsselbegriffen.
 Die Originaltexte bleiben als <code>original_summary</code> in <code>data.json</code> erhalten.</p>
+<p>Bereits geprüfte Einträge werden in <code>docs/gemini_cache.json</code> zwischengespeichert
+und beim nächsten Durchlauf nicht erneut an die API gesendet.</p>
 
 <h3>API-Änderungen erkennen</h3>
 <p>Der Selbsttest prüft wöchentlich automatisch, ob die Lobbyregister-API und die Gemini-API
@@ -186,14 +192,15 @@ Die aktuelle API-Dokumentation ist unter
 </ol>
 
 <h3>Gemini-Anreicherung fehlgeschlagen</h3>
-<p>Erkennbar am gelben Warnhinweis auf der Webseite oder in der Wochenmail. Außerdem
-wird bei signifikanten Fehlern eine Admin-Mail verschickt.</p>
+<p>Erkennbar am gelben Warnhinweis auf der Webseite oder am „⏳ KI-Prüfung ausstehend"-Badge
+auf einzelnen Karten. Außerdem wird bei Quota-Erschöpfung eine Admin-Mail verschickt.</p>
 <ol>
   <li>In den GitHub Actions Logs den Step „Gemini-Anreicherung" prüfen</li>
   <li>Häufige Ursachen:
     <ul>
       <li><strong>API-Key abgelaufen:</strong> Neuen Key auf <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> erstellen (Account: lobbyregister.bot@gmail.com) und als <code>GEMINI_API_KEY</code> Secret eintragen</li>
-      <li><strong>Rate Limit:</strong> Free Tier hat 15 req/min – bei sehr vielen Einträgen kann es zu Verzögerungen kommen. Das Skript wartet automatisch und wiederholt.</li>
+      <li><strong>Quota erschöpft:</strong> Free Tier hat 500 req/Tag – bei vielen neuen Einträgen kann das Limit erreicht werden. Das Caching reduziert den Verbrauch erheblich. Ausstehende Prüfungen werden beim nächsten Durchlauf automatisch nachgeholt.</li>
+      <li><strong>Rate Limit:</strong> Free Tier hat 15 req/min – das Skript wartet automatisch.</li>
       <li><strong>Modell nicht verfügbar:</strong> Google ändert gelegentlich Modellnamen. In <code>gemini_enrich.py</code> die Variable <code>GEMINI_MODEL</code> prüfen und ggf. anpassen. Aktuell: <code>gemini-3.1-flash-lite-preview</code></li>
     </ul>
   </li>

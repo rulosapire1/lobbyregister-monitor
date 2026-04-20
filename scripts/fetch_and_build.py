@@ -106,6 +106,19 @@ def fetch_real_pdf_url(page_url):
         pass
     return page_url
 
+def calc_delay_days(sending, upload):
+    try:
+        if not sending or not upload:
+            return ""
+        d1 = date.fromisoformat(sending)
+        d2 = date.fromisoformat(upload)
+        diff = (d2 - d1).days
+        if diff > 0:
+            return f" (+{diff} Tage)"
+        return ""
+    except:
+        return ""
+
 # ── Vorherige Daten laden ──────────────────────────────────────────────────────
 
 def load_previous_data():
@@ -447,7 +460,11 @@ def render_entry_card(stmt):
     org = stmt["org_name"].replace('<', '&lt;').replace('>', '&gt;')
     org_url = stmt.get("org_url", "")
     sending = format_date_de(stmt.get("sending_date"))
-    upload = format_date_de(stmt.get("upload_date"))
+    upload_raw = stmt.get("upload_date")
+    sending_raw = stmt.get("sending_date")
+
+    delay = calc_delay_days(sending_raw, upload_raw)
+    upload = format_date_de(upload_raw) + delay
 
     summary = (stmt.get("summary", "") or "Keine Beschreibung verf\u00fcgbar.")
     summary = re.sub(r'<(?!/?b>)', '&lt;', summary).replace('>', '&gt;').replace('<b&gt;', '<b>').replace('</b&gt;', '</b>')
@@ -489,7 +506,7 @@ def render_entry_card(stmt):
 def generate_html(statements, generated_at):
     by_date = defaultdict(list)
     for stmt in statements:
-        key = stmt.get("sending_date") or stmt.get("upload_date") or "unbekannt"
+        key = stmt.get("upload_date") or stmt.get("sending_date") or "unbekannt"
         by_date[key].append(stmt)
 
     vorhaben_counts = defaultdict(int)
@@ -581,7 +598,11 @@ def main():
     with open("docs/data.json", "w", encoding="utf-8") as f:
         json.dump({
             "generated_at": generated_at,
-            "statements": all_statements,
+            "statements": sorted(
+                statements,
+                key=lambda x: (x.get("upload_date") or x.get("sending_date") or "0000-00-00"),
+                reverse=True
+            )
         }, f, ensure_ascii=False, indent=2)
 
     html = generate_html(all_statements, generated_at)

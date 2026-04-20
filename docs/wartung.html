@@ -7,283 +7,130 @@
 <title>Wartungsdokumentation – Lobbyregister-Monitor</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#222;background:#f5f7fa}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:14px;line-height:1.6;color:#334155;background:#f8fafc}
+a{color:#004B87;text-decoration:none}
+a:hover{color:#003366;text-decoration:underline}
 .page{max-width:860px;margin:0 auto;padding:2rem 1.25rem}
-h1{font-size:22px;color:#003366;margin-bottom:.5rem}
-h2{font-size:16px;color:#004B87;margin:2rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid #c5d5e8}
-h3{font-size:14px;font-weight:700;color:#003366;margin:1.25rem 0 .4rem}
-p{margin-bottom:.75rem;color:#444}
-ul,ol{margin:.5rem 0 .75rem 1.5rem;color:#444}
+h1{font-size:22px;color:#0f172a;margin-bottom:.5rem}
+h2{font-size:16px;color:#004B87;margin:2rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid #e2e8f0}
+h3{font-size:14px;font-weight:700;color:#0f172a;margin:1.25rem 0 .4rem}
+p{margin-bottom:.75rem;color:#475569}
+ul,ol{margin:.5rem 0 .75rem 1.5rem;color:#475569}
 li{margin-bottom:.3rem}
-code{background:#f0f4f8;border:1px solid #d0d8e4;padding:1px 5px;font-family:monospace;font-size:12px;color:#c00}
-.box{background:#fff;border:1px solid #d0d8e4;border-left:3px solid #004B87;padding:1rem 1.25rem;margin:1rem 0}
-.warn{background:#fff8e1;border:1px solid #ffe082;border-left:3px solid #f9a825;padding:1rem 1.25rem;margin:1rem 0}
+code{background:#f1f5f9;border:1px solid #e2e8f0;padding:1px 5px;font-family:monospace;font-size:12px;color:#dc2626}
+.box{background:#fff;border:1px solid #e2e8f0;border-left:3px solid #004B87;padding:1rem 1.25rem;margin:1rem 0;border-radius:6px}
+.warn{background:#fefce8;border:1px solid #fde047;border-left:3px solid #eab308;padding:1rem 1.25rem;margin:1rem 0;border-radius:6px}
 .secret-table{width:100%;border-collapse:collapse;margin:.75rem 0;font-size:13px}
 .secret-table th{background:#004B87;color:#fff;padding:7px 12px;text-align:left;font-weight:700}
-.secret-table td{padding:7px 12px;border-bottom:1px solid #e0e8f0;vertical-align:top}
-.secret-table tr:nth-child(even) td{background:#f5f7fa}
-.back{display:inline-block;margin-bottom:1.5rem;font-size:12px;color:#004B87;text-decoration:none}
+.secret-table td{padding:7px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+.secret-table tr:nth-child(even) td{background:#f8fafc}
+.back{display:inline-block;margin-bottom:1.5rem;font-size:0.8rem;color:#64748b}
 </style>
 </head>
 <body>
 <div class="page">
-<a class="back" href="index.html">← Zurück zur Übersicht</a>
+<a class="back" href="index.html">&larr; Zur&uuml;ck zur &Uuml;bersicht</a>
 
 <h1>Wartungsdokumentation</h1>
-<p style="color:#888;font-size:12px">Lobbyregister-Monitor · BMWE Unterabteilung IIIA · Stand: automatisch generiert</p>
+<p style="color:#94a3b8;font-size:12px">Lobbyregister-Monitor &middot; Interne Dokumentation</p>
 
 <div class="warn">
-  <strong>Wichtig:</strong> Diese Seite enthält sensible Zugangsdaten als Platzhalter.
-  Die echten Werte sind ausschließlich als GitHub Secrets hinterlegt und
-  niemals im Klartext in Dateien oder im Chat zu teilen.
+  <strong>Wichtig:</strong> Echte Zugangsdaten sind ausschlie&szlig;lich als GitHub Secrets hinterlegt.
 </div>
 
-<h2>1. Systemübersicht</h2>
-<p>Der Lobbyregister-Monitor ist ein automatisiertes System, das <strong>täglich</strong>:</p>
+<h2>1. System&uuml;bersicht</h2>
+<p>Der Lobbyregister-Monitor ruft <strong>t&auml;glich inkrementell</strong> Stellungnahmen ab:</p>
 <ul>
-  <li>Stellungnahmen und Gutachten aus dem Lobbyregister des Deutschen Bundestages abruft</li>
-  <li>Einträge per KI (Google Gemini 3.1 Flash Lite) auf Energie-/Klimarelevanz prüft und Beschreibungstexte zusammenfasst</li>
-  <li>Eine öffentlich zugängliche Übersichtsseite auf GitHub Pages aktualisiert</li>
+  <li>Nur neue Registereintr&auml;ge werden von der API geladen (bereits bekannte werden &uuml;bersprungen)</li>
+  <li>KI-Pr&uuml;fung (Gemini 3.1 Flash Lite) mit lokalem Cache &ndash; bereits gepr&uuml;fte Eintr&auml;ge werden nicht erneut gesendet</li>
+  <li>Budgetlimit: max. 100 KI-Calls pro Durchlauf</li>
+  <li>&Uuml;bersichtsseite auf GitHub Pages mit Pagination</li>
 </ul>
-<p>Zusätzlich wird <strong>jeden Montag</strong>:</p>
-<ul>
-  <li>Eine wöchentliche Zusammenfassungs-Mail über Resend versendet</li>
-  <li>Ein Selbsttest (Health-Check) durchgeführt und bei Problemen eine Admin-Mail verschickt</li>
-</ul>
-<p>Das System läuft vollautomatisch jeden Tag um <strong>6:00 Uhr MESZ</strong> (= 4:00 Uhr UTC).</p>
-
-<div class="box">
-  <strong>Öffentliche URL der Seite:</strong><br>
-  <a href="https://lobbyregister-bot.de">https://lobbyregister-bot.de</a><br><br>
-  <strong>GitHub Repository:</strong><br>
-  <a href="https://github.com/BMWE-IIIA4/lobbyregister-monitor">https://github.com/BMWE-IIIA4/lobbyregister-monitor</a><br><br>
-  <strong>GitHub Actions (Logs):</strong><br>
-  <a href="https://github.com/BMWE-IIIA4/lobbyregister-monitor/actions">https://github.com/BMWE-IIIA4/lobbyregister-monitor/actions</a>
-</div>
+<p>Zus&auml;tzlich <strong>jeden Montag</strong>: Wochenmail und Selbsttest.</p>
+<p>Ablauf: t&auml;glich um <strong>6:00 Uhr MESZ</strong> (4:00 UTC).</p>
 
 <h2>2. Zugangsdaten und Secrets</h2>
-<p>Alle Zugangsdaten sind als <strong>GitHub Secrets</strong> hinterlegt. Um sie einzusehen oder zu ändern:
-GitHub Repository → Settings → Secrets and variables → Actions.</p>
+<p>GitHub Repository &rarr; Settings &rarr; Secrets and variables &rarr; Actions.</p>
 
 <table class="secret-table">
-  <tr>
-    <th>Secret-Name</th>
-    <th>Beschreibung</th>
-    <th>Wo ändern</th>
-  </tr>
-  <tr>
-    <td><code>LOBBYREGISTER_API_KEY</code></td>
-    <td>API-Key des Lobbyregisters. Aktuell öffentlicher Key, ggf. individuellen Key beantragen bei lobbyregister@bundestag.de</td>
-    <td>Direkt als neuen Secret-Wert eintragen</td>
-  </tr>
-  <tr>
-    <td><code>GEMINI_API_KEY</code></td>
-    <td>API-Key für Google Gemini 3.1 Flash Lite (KI-Relevanzfilterung und Zusammenfassungen). Kostenloser Free Tier. Account: lobbyregister.bot@gmail.com</td>
-    <td><a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> → neuen Key erstellen</td>
-  </tr>
-  <tr>
-    <td><code>RESEND_API_KEY</code></td>
-    <td>API-Key für den E-Mail-Versand über Resend. Format: <code>re_XXXX...</code></td>
-    <td>resend.com → API Keys → neuen Key erstellen</td>
-  </tr>
-  <tr>
-    <td><code>EMAIL_RECIPIENT</code></td>
-    <td>Empfänger der wöchentlichen Mail (aktuell Testadresse, später Büropostfach)</td>
-    <td>Direkt als neuen Secret-Wert eintragen</td>
-  </tr>
-  <tr>
-    <td><code>ADMIN_EMAIL</code></td>
-    <td>E-Mail-Adresse für Fehlerbenachrichtigungen (Health-Check und Gemini-Ausfälle)</td>
-    <td>Direkt als neuen Secret-Wert eintragen</td>
-  </tr>
+  <tr><th>Secret-Name</th><th>Beschreibung</th></tr>
+  <tr><td><code>LOBBYREGISTER_API_KEY</code></td><td>&Ouml;ffentlicher API-Key des Lobbyregisters</td></tr>
+  <tr><td><code>GEMINI_API_KEY</code></td><td>Google Gemini API-Key (Free Tier, Account: lobbyregister.bot@gmail.com)</td></tr>
+  <tr><td><code>RESEND_API_KEY</code></td><td>Resend API-Key f&uuml;r E-Mail-Versand (<code>re_XXXX...</code>)</td></tr>
+  <tr><td><code>EMAIL_RECIPIENT</code></td><td>Empf&auml;nger der w&ouml;chentlichen Mail</td></tr>
+  <tr><td><code>ADMIN_EMAIL</code></td><td>Empf&auml;nger f&uuml;r Fehlerbenachrichtigungen</td></tr>
 </table>
 
-<h3>Resend-Account</h3>
+<h3>Absenderadressen (Domain: lobbyregister-bot.de)</h3>
 <ul>
-  <li>URL: <a href="https://resend.com">resend.com</a></li>
-  <li>Account-E-Mail: <strong>[beim aktuellen Administrator erfragen – nicht hier hinterlegen]</strong></li>
-  <li>Passwort: <strong>[beim aktuellen Administrator erfragen – nicht hier hinterlegen]</strong></li>
-  <li>Aktuell genutzter Absender: <code>onboarding@resend.dev</code> (kostenloser Testmodus)</li>
+  <li>Wochenmail: <code>Lobbyregister Monitor &lt;update@lobbyregister-bot.de&gt;</code></li>
+  <li>Systemchecks: <code>Monitor Systemcheck &lt;healthcheck@lobbyregister-bot.de&gt;</code></li>
 </ul>
 
 <h3>Gemini API</h3>
 <ul>
   <li>Verwaltung: <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a></li>
-  <li>Account: <strong>lobbyregister.bot@gmail.com</strong> (separater Google-Account, nicht persönlich)</li>
-  <li>Genutztes Modell: <code>gemini-3.1-flash-lite-preview</code> (kostenloses Free Tier)</li>
+  <li>Account: <strong>lobbyregister.bot@gmail.com</strong></li>
+  <li>Modell: <code>gemini-3.1-flash-lite-preview</code></li>
   <li>Limits Free Tier: 15 Requests/Minute, 500 Requests/Tag</li>
-  <li>Der Monitor funktioniert auch ohne Gemini – Einträge werden dann ungefiltert angezeigt</li>
 </ul>
 
 <h2>3. Dateien im Repository</h2>
 <table class="secret-table">
   <tr><th>Datei</th><th>Funktion</th></tr>
-  <tr><td><code>.github/workflows/update.yml</code></td><td>GitHub Actions Workflow – steuert den automatischen Tagesablauf</td></tr>
-  <tr><td><code>scripts/fetch_and_build.py</code></td><td>Ruft Daten vom Lobbyregister ab und generiert die initiale HTML-Seite</td></tr>
-  <tr><td><code>scripts/gemini_enrich.py</code></td><td>KI-Relevanzfilterung, Zusammenfassung per Gemini, HTML-Neugenerierung mit Pending-Banner</td></tr>
-  <tr><td><code>scripts/send_email.py</code></td><td>Liest die gespeicherten Daten und versendet die Wochenmail (montags)</td></tr>
-  <tr><td><code>scripts/health_check.py</code></td><td>Wöchentlicher Selbsttest: API, Gemini, Resend, Seite (montags)</td></tr>
-  <tr><td><code>scripts/template.html</code></td><td>HTML-Vorlage für die Übersichtsseite</td></tr>
-  <tr><td><code>docs/index.html</code></td><td>Generierte Seite (wird automatisch überschrieben)</td></tr>
-  <tr><td><code>docs/data.json</code></td><td>Zwischengespeicherte API-Daten inkl. Gemini-Ergebnisse (wird automatisch überschrieben)</td></tr>
-  <tr><td><code>docs/gemini_cache.json</code></td><td>Lokaler Cache für bereits geprüfte Stellungnahmen (per GitHub Actions Cache persistiert)</td></tr>
-  <tr><td><code>docs/hilfe.html</code></td><td>Nutzungsanleitung</td></tr>
-  <tr><td><code>docs/wartung.html</code></td><td>Diese Seite</td></tr>
+  <tr><td><code>.github/workflows/update.yml</code></td><td>Workflow: Tagesablauf, Cache-Verwaltung</td></tr>
+  <tr><td><code>scripts/fetch_and_build.py</code></td><td>Inkrementeller API-Abruf, Filterung, initiale HTML-Generierung</td></tr>
+  <tr><td><code>scripts/gemini_enrich.py</code></td><td>KI-Relevanzfilterung, Zusammenfassung, HTML-Rebuild mit Pending-Banner</td></tr>
+  <tr><td><code>scripts/send_email.py</code></td><td>Wochenmail (montags)</td></tr>
+  <tr><td><code>scripts/health_check.py</code></td><td>Selbsttest (montags)</td></tr>
+  <tr><td><code>scripts/save_run_log.py</code></td><td>Workflow-Protokoll f&uuml;r Archivseite</td></tr>
+  <tr><td><code>scripts/template.html</code></td><td>HTML-Vorlage mit Pagination und Filter</td></tr>
+  <tr><td><code>docs/data.json</code></td><td>Stellungnahmen-Daten (gecacht zwischen Runs)</td></tr>
+  <tr><td><code>docs/gemini_cache.json</code></td><td>KI-Pr&uuml;fungsergebnisse (gecacht zwischen Runs)</td></tr>
+  <tr><td><code>docs/run_history.json</code></td><td>Durchlauf-Statistiken (gecacht, max. 90 Eintr&auml;ge)</td></tr>
 </table>
 
-<h2>4. Ablauf eines täglichen Durchlaufs</h2>
-<p>Der GitHub Actions Workflow führt täglich folgende Schritte aus:</p>
+<h2>4. Ablauf eines t&auml;glichen Durchlaufs</h2>
 <ol>
-  <li><strong>Gemini-Cache laden</strong> – Bereits geprüfte Stellungnahmen werden aus dem GitHub Actions Cache wiederhergestellt, um API-Quota zu schonen.</li>
-  <li><strong>fetch_and_build.py</strong> – Daten vom Lobbyregister abrufen, nach Themenfeld und Empfänger filtern, <code>data.json</code> und initiale <code>index.html</code> generieren.</li>
-  <li><strong>gemini_enrich.py</strong> – Neue Stellungnahmen per Gemini auf Relevanz prüfen und Beschreibungen zusammenfassen. Ergebnisse werden im Cache gespeichert. Bereits gecachte Einträge werden übersprungen. Bei Quota-Erschöpfung: sofortiger Abbruch (Fail-Fast), ungeprüfte Einträge erhalten ein „Pending"-Badge. HTML wird mit aktuellen Daten neu generiert (inkl. Pending-Banner).</li>
-  <li><strong>GitHub Pages Deploy</strong> – Seite veröffentlichen</li>
-  <li><strong>send_email.py</strong> (nur montags) – Wochenmail versenden</li>
-  <li><strong>health_check.py</strong> (nur montags) – Selbsttest durchführen</li>
+  <li><strong>Cache laden</strong> &ndash; <code>data.json</code>, <code>gemini_cache.json</code>, <code>run_history.json</code> aus GitHub Actions Cache</li>
+  <li><strong>fetch_and_build.py</strong> &ndash; Registernummern laden, nur neue einzeln abrufen, mit vorherigen Daten mergen</li>
+  <li><strong>gemini_enrich.py</strong> &ndash; Neue Eintr&auml;ge per KI pr&uuml;fen (max. 100/Run), gecachte &uuml;berspringen, HTML neu bauen</li>
+  <li><strong>save_run_log.py</strong> &ndash; Durchlauf-Statistiken an <code>run_history.json</code> anh&auml;ngen</li>
+  <li><strong>Deploy</strong> &ndash; GitHub Pages ver&ouml;ffentlichen</li>
+  <li><strong>Montags:</strong> <code>send_email.py</code> (Wochenmail) + <code>health_check.py</code> (Selbsttest)</li>
 </ol>
 
-<h2>5. Gefilterte Daten – was wird abgerufen?</h2>
-<p>Das Skript ruft alle Registereinträge über die Lobbyregister API v2 ab und filtert in zwei Stufen:</p>
+<h2>5. Fehlersuche</h2>
+
+<h3>Seite nicht aktualisiert</h3>
+<ol>
+  <li><a href="https://github.com/BMWE-IIIA4/lobbyregister-monitor/actions">GitHub Actions</a> &ouml;ffnen</li>
+  <li>Fehlgeschlagenen Job anklicken und Logs lesen</li>
+  <li>H&auml;ufig: API-Key abgelaufen, GitHub Pages nicht aktiviert</li>
+</ol>
+
+<h3>Gemini fehlgeschlagen</h3>
+<p>Erkennbar an &bdquo;KI-Pr&uuml;fung ausstehend&ldquo;-Badge auf Karten oder gelbem Warnbanner.</p>
 <ul>
-  <li><strong>Pre-Filter (Orga-Ebene):</strong> Organisationen ohne jeglichen Energiebezug werden ausgeschlossen</li>
-  <li><strong>Strikter Filter (Stellungnahme-Ebene):</strong> Nur Stellungnahmen mit relevanten Themenfeldern passieren den Filter. Orga-Felder dienen nur als Fallback.</li>
+  <li><strong>Quota:</strong> 500 req/Tag &ndash; Caching und Budgetlimit (100/Run) reduzieren den Verbrauch. Ausstehende Pr&uuml;fungen werden automatisch nachgeholt.</li>
+  <li><strong>Key abgelaufen:</strong> Neuen Key auf <a href="https://aistudio.google.com/apikey">aistudio.google.com</a> erstellen</li>
+  <li><strong>Modell ge&auml;ndert:</strong> <code>GEMINI_MODEL</code> in <code>gemini_enrich.py</code> und <code>health_check.py</code> anpassen</li>
 </ul>
-<p>Weitere Filterkriterien:</p>
-<ul>
-  <li><strong>Empfänger:</strong> BMWE oder Bundestag</li>
-  <li><strong>Themenfelder:</strong> Energie, Klimaschutz, EU-Binnenmarkt, EU-Gesetzgebung, Bundestag, Wettbewerbsrecht, Politisches Leben/Parteien, Sonstige</li>
-  <li><strong>Zeitraum:</strong> ab 1. Januar 2026</li>
-</ul>
-<p>Um die Filter zu ändern, müssen in <code>scripts/fetch_and_build.py</code> die Variablen
-<code>FIELD_PRIORITY</code>, <code>TARGET_FIELD_CODES</code> und <code>START_DATE</code> angepasst werden.</p>
-
-<h3>KI-Relevanzfilterung (Gemini)</h3>
-<p>Nach dem Datenabruf prüft <code>gemini_enrich.py</code> alle Einträge auf Bezug zum Aufgabenportfolio
-der Unterabteilung IIIA. Der Relevanzkatalog ist direkt im Skript als <code>RELEVANZ_KATALOG</code>
-hinterlegt und kann dort angepasst werden. Einträge der Priorität 1 (Energie/Wasserstoff)
-werden nie gefiltert.</p>
-<p>Zusätzlich werden alle Beschreibungstexte per Gemini auf 2–5 Sätze zusammengefasst,
-mit fett markierten Schlüsselbegriffen.
-Die Originaltexte bleiben als <code>original_summary</code> in <code>data.json</code> erhalten.</p>
-<p>Bereits geprüfte Einträge werden in <code>docs/gemini_cache.json</code> zwischengespeichert
-und beim nächsten Durchlauf nicht erneut an die API gesendet.</p>
-
-<h3>API-Änderungen erkennen</h3>
-<p>Der Selbsttest prüft wöchentlich automatisch, ob die Lobbyregister-API und die Gemini-API
-noch erreichbar sind. Bei Änderungen am API-Format wird die Admin-E-Mail benachrichtigt.
-Die aktuelle API-Dokumentation ist unter
-<a href="https://api.lobbyregister.bundestag.de/rest/v2/swagger-ui/">api.lobbyregister.bundestag.de</a> einsehbar.</p>
-
-<h2>6. Fehlersuche</h2>
-
-<h3>Seite wurde nicht aktualisiert</h3>
-<ol>
-  <li>GitHub Actions öffnen: <a href="https://github.com/BMWE-IIIA4/lobbyregister-monitor/actions">Link</a></li>
-  <li>Den letzten Workflow-Durchlauf anklicken</li>
-  <li>Den fehlgeschlagenen Job (roter X) anklicken und die Logs lesen</li>
-  <li>Häufige Ursachen: API-Key abgelaufen, Lobbyregister-API nicht erreichbar, GitHub Pages nicht aktiviert</li>
-</ol>
-
-<h3>Mail wurde nicht versendet</h3>
-<ol>
-  <li>In den GitHub Actions Logs den Job „Wöchentliche Mail versenden" prüfen</li>
-  <li>Bei Resend unter <a href="https://resend.com">resend.com</a> → Logs prüfen ob Sendung registriert wurde</li>
-  <li>Häufige Ursache: RESEND_API_KEY abgelaufen oder widerrufen → neuen Key erstellen und als Secret eintragen</li>
-</ol>
-
-<h3>Gemini-Anreicherung fehlgeschlagen</h3>
-<p>Erkennbar am gelben Warnhinweis auf der Webseite oder am „⏳ KI-Prüfung ausstehend"-Badge
-auf einzelnen Karten. Außerdem wird bei Quota-Erschöpfung eine Admin-Mail verschickt.</p>
-<ol>
-  <li>In den GitHub Actions Logs den Step „Gemini-Anreicherung" prüfen</li>
-  <li>Häufige Ursachen:
-    <ul>
-      <li><strong>API-Key abgelaufen:</strong> Neuen Key auf <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> erstellen (Account: lobbyregister.bot@gmail.com) und als <code>GEMINI_API_KEY</code> Secret eintragen</li>
-      <li><strong>Quota erschöpft:</strong> Free Tier hat 500 req/Tag – bei vielen neuen Einträgen kann das Limit erreicht werden. Das Caching reduziert den Verbrauch erheblich. Ausstehende Prüfungen werden beim nächsten Durchlauf automatisch nachgeholt.</li>
-      <li><strong>Rate Limit:</strong> Free Tier hat 15 req/min – das Skript wartet automatisch.</li>
-      <li><strong>Modell nicht verfügbar:</strong> Google ändert gelegentlich Modellnamen. In <code>gemini_enrich.py</code> die Variable <code>GEMINI_MODEL</code> prüfen und ggf. anpassen. Aktuell: <code>gemini-3.1-flash-lite-preview</code></li>
-    </ul>
-  </li>
-  <li>Der Monitor läuft auch ohne Gemini weiter – Einträge werden dann ungefiltert mit Originaltexten angezeigt</li>
-</ol>
 
 <h3>Manueller Start</h3>
-<p>Das System kann jederzeit manuell gestartet werden:</p>
+<p>Repository &rarr; Actions &rarr; &bdquo;Lobbyregister Monitor&ldquo; &rarr; Run workflow.</p>
+
+<h2>6. System neu aufsetzen</h2>
 <ol>
-  <li>GitHub Repository öffnen</li>
-  <li>Tab „Actions" anklicken</li>
-  <li>Workflow „Lobbyregister Monitor" anklicken</li>
-  <li>„Run workflow" → „Run workflow" klicken</li>
+  <li>GitHub-Account: <a href="https://github.com/signup">github.com/signup</a></li>
+  <li>Repository anlegen: <code>lobbyregister-monitor</code>, Public</li>
+  <li>GitHub Pages aktivieren: Settings &rarr; Pages &rarr; Source: GitHub Actions</li>
+  <li>Secrets eintragen (siehe Abschnitt 2)</li>
+  <li>Dateien aus dem alten Repository &uuml;bertragen</li>
+  <li>Resend: Account auf <a href="https://resend.com">resend.com</a>, Domain verifizieren</li>
+  <li>Gemini: Key auf <a href="https://aistudio.google.com/apikey">aistudio.google.com</a></li>
+  <li>URLs in <code>update.yml</code>, <code>fetch_and_build.py</code>, <code>template.html</code> anpassen</li>
 </ol>
-
-<h2>7. System komplett neu aufsetzen (für Nachfolger)</h2>
-<p>Falls das System auf einem neuen GitHub-Account neu aufgesetzt werden muss:</p>
-
-<h3>Schritt 1: GitHub-Account</h3>
-<p>Falls kein Account vorhanden: <a href="https://github.com/signup">github.com/signup</a> – kostenlos registrieren.</p>
-
-<h3>Schritt 2: Repository anlegen</h3>
-<ol>
-  <li>Auf github.com einloggen → „+" → „New repository"</li>
-  <li>Name: <code>lobbyregister-monitor</code>, Sichtbarkeit: <strong>Public</strong>, README anhaken</li>
-  <li>„Create repository" klicken</li>
-</ol>
-
-<h3>Schritt 3: GitHub Pages aktivieren</h3>
-<ol>
-  <li>Repository → Settings → Pages</li>
-  <li>Source: „GitHub Actions" auswählen → Speichern</li>
-</ol>
-
-<h3>Schritt 4: Secrets eintragen</h3>
-<p>Repository → Settings → Secrets and variables → Actions → folgende Secrets anlegen:</p>
-<ul>
-  <li><code>LOBBYREGISTER_API_KEY</code> – Lobbyregister API-Key (öffentlich auf der Infoseite verfügbar)</li>
-  <li><code>GEMINI_API_KEY</code> – von <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> (kostenlos, Account: lobbyregister.bot@gmail.com)</li>
-  <li><code>RESEND_API_KEY</code> – von resend.com</li>
-  <li><code>EMAIL_RECIPIENT</code> – Ziel-E-Mail-Adresse für die Wochenmail</li>
-  <li><code>ADMIN_EMAIL</code> – Adresse für Fehlerbenachrichtigungen</li>
-</ul>
-
-<h3>Schritt 5: Dateien übertragen</h3>
-<p>Alle Dateien aus dem alten Repository in das neue kopieren. Am einfachsten:</p>
-<ol>
-  <li>Altes Repo öffnen, jede Datei anklicken, „Raw" → Inhalt kopieren</li>
-  <li>Im neuen Repo: „Add file" → „Create new file" → gleichen Pfad und Inhalt einfügen</li>
-</ol>
-<p>Alternativ kann eine KI (z.B. Claude auf claude.ai) beim Aufsetzen helfen –
-einfach diese Wartungsdokumentation als Kontext einfügen und um Unterstützung bitten.</p>
-
-<h3>Schritt 6: Resend-Account</h3>
-<p>Neuen kostenlosen Account auf <a href="https://resend.com">resend.com</a> erstellen,
-API-Key generieren, Empfängeradresse verifizieren (unter „Audiences").</p>
-
-<h3>Schritt 7: Gemini API-Key</h3>
-<p>Google-Account erforderlich (lobbyregister.bot@gmail.com oder neuer Account). Auf <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a>
-einen kostenlosen API-Key erstellen. Der Free Tier reicht für den Monitor aus
-(15 Requests/Minute, 500 Requests/Tag).</p>
-
-<h3>Schritt 8: URLs anpassen</h3>
-<p>In folgenden Dateien den GitHub-Nutzernamen anpassen:</p>
-<ul>
-  <li><code>.github/workflows/update.yml</code> – Zeile mit <code>SITE_URL</code></li>
-  <li><code>scripts/fetch_and_build.py</code> – Variable <code>SITE_URL</code></li>
-  <li><code>scripts/template.html</code> – Links in Header und Footer</li>
-</ul>
-
-<h3>Schritt 9: Relevanzkatalog anpassen (optional)</h3>
-<p>Der Katalog der relevanten Themen für die KI-Filterung ist in
-<code>scripts/gemini_enrich.py</code> in der Variable <code>RELEVANZ_KATALOG</code> hinterlegt.
-Er basiert auf dem Aufgabenportfolio der Unterabteilung IIIA. Bei organisatorischen
-Änderungen (z.B. neue Zuständigkeiten) sollte dieser Katalog angepasst werden.</p>
-
-<h2>8. Kontakt und Verantwortlichkeit</h2>
-<div class="box">
-  <strong>Fachliche Verantwortung:</strong> Martin Jahn, BMWE Unterabteilung IIIA4<br>
-  <strong>E-Mail:</strong> <a href="mailto:martin.jahn@bmwe.bund.de">martin.jahn@bmwe.bund.de</a><br><br>
-  <strong>Abonnement-Änderungen und Weiterleitungen</strong> werden über das Büropostfach verwaltet –
-  nicht über Resend direkt.
-</div>
 
 </div>
 </body>

@@ -42,7 +42,7 @@ code{background:#f0f4f8;border:1px solid #d0d8e4;padding:1px 5px;font-family:mon
 <p>Der Lobbyregister-Monitor ist ein automatisiertes System, das <strong>täglich</strong>:</p>
 <ul>
   <li>Stellungnahmen und Gutachten aus dem Lobbyregister des Deutschen Bundestages abruft</li>
-  <li>Einträge per KI (Google Gemini Flash 2.5 Lite) auf Energie-/Klimarelevanz prüft und Beschreibungstexte zusammenfasst</li>
+  <li>Einträge per KI (Google Gemini 3.1 Flash Lite) auf Energie-/Klimarelevanz prüft und Beschreibungstexte zusammenfasst</li>
   <li>Eine öffentlich zugängliche Übersichtsseite auf GitHub Pages aktualisiert</li>
 </ul>
 <p>Zusätzlich wird <strong>jeden Montag</strong>:</p>
@@ -78,7 +78,7 @@ GitHub Repository → Settings → Secrets and variables → Actions.</p>
   </tr>
   <tr>
     <td><code>GEMINI_API_KEY</code></td>
-    <td>API-Key für Google Gemini Flash (KI-Relevanzfilterung und Zusammenfassungen). Kostenloser Free Tier.</td>
+    <td>API-Key für Google Gemini 3.1 Flash Lite (KI-Relevanzfilterung und Zusammenfassungen). Kostenloser Free Tier. Account: lobbyregister.bot@gmail.com</td>
     <td><a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> → neuen Key erstellen</td>
   </tr>
   <tr>
@@ -109,8 +109,9 @@ GitHub Repository → Settings → Secrets and variables → Actions.</p>
 <h3>Gemini API</h3>
 <ul>
   <li>Verwaltung: <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a></li>
-  <li>Genutztes Modell: <code>gemini-2.5-flash-lite</code> (kostenloses Free Tier)</li>
-  <li>Limits Free Tier: 30 Requests/Minute, 2.000 Requests/Tag</li>
+  <li>Account: <strong>lobbyregister.bot@gmail.com</strong> (separater Google-Account, nicht persönlich)</li>
+  <li>Genutztes Modell: <code>gemini-3.1-flash-lite-preview</code> (kostenloses Free Tier)</li>
+  <li>Limits Free Tier: 15 Requests/Minute, 500 Requests/Tag</li>
   <li>Der Monitor funktioniert auch ohne Gemini – Einträge werden dann ungefiltert angezeigt</li>
 </ul>
 
@@ -119,7 +120,7 @@ GitHub Repository → Settings → Secrets and variables → Actions.</p>
   <tr><th>Datei</th><th>Funktion</th></tr>
   <tr><td><code>.github/workflows/update.yml</code></td><td>GitHub Actions Workflow – steuert den automatischen Tagesablauf</td></tr>
   <tr><td><code>scripts/fetch_and_build.py</code></td><td>Ruft Daten vom Lobbyregister ab und generiert die HTML-Seite</td></tr>
-  <tr><td><code>scripts/gemini_enrich.py</code></td><td>KI-Relevanzfilterung und Zusammenfassung per Gemini Flash</td></tr>
+  <tr><td><code>scripts/gemini_enrich.py</code></td><td>KI-Relevanzfilterung und Zusammenfassung per Gemini Flash Lite</td></tr>
   <tr><td><code>scripts/rebuild_html.py</code></td><td>Generiert HTML nach Gemini-Anreicherung neu (inkl. Warnhinweis bei Ausfall)</td></tr>
   <tr><td><code>scripts/send_email.py</code></td><td>Liest die gespeicherten Daten und versendet die Wochenmail (montags)</td></tr>
   <tr><td><code>scripts/health_check.py</code></td><td>Wöchentlicher Selbsttest: API, Gemini, Resend, Seite (montags)</td></tr>
@@ -157,7 +158,8 @@ GitHub Repository → Settings → Secrets and variables → Actions.</p>
 der Unterabteilung IIIA. Der Relevanzkatalog ist direkt im Skript als <code>RELEVANZ_KATALOG</code>
 hinterlegt und kann dort angepasst werden. Einträge der Priorität 1 (Energie/Wasserstoff)
 werden nie gefiltert.</p>
-<p>Zusätzlich werden alle Beschreibungstexte per Gemini auf max. 2 Sätze zusammengefasst.
+<p>Zusätzlich werden alle Beschreibungstexte per Gemini auf 2–5 Sätze zusammengefasst,
+mit fett markierten Schlüsselbegriffen.
 Die Originaltexte bleiben als <code>original_summary</code> in <code>data.json</code> erhalten.</p>
 
 <h3>API-Änderungen erkennen</h3>
@@ -190,9 +192,9 @@ wird bei signifikanten Fehlern eine Admin-Mail verschickt.</p>
   <li>In den GitHub Actions Logs den Step „Gemini-Anreicherung" prüfen</li>
   <li>Häufige Ursachen:
     <ul>
-      <li><strong>API-Key abgelaufen:</strong> Neuen Key auf <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> erstellen und als <code>GEMINI_API_KEY</code> Secret eintragen</li>
-      <li><strong>Rate Limit:</strong> Free Tier hat 30 req/min – bei sehr vielen Einträgen kann es zu Verzögerungen kommen. Das Skript wartet automatisch und wiederholt.</li>
-      <li><strong>Modell nicht verfügbar:</strong> Google ändert gelegentlich Modellnamen. In <code>gemini_enrich.py</code> die Variable <code>GEMINI_MODEL</code> prüfen und ggf. anpassen.</li>
+      <li><strong>API-Key abgelaufen:</strong> Neuen Key auf <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> erstellen (Account: lobbyregister.bot@gmail.com) und als <code>GEMINI_API_KEY</code> Secret eintragen</li>
+      <li><strong>Rate Limit:</strong> Free Tier hat 15 req/min – bei sehr vielen Einträgen kann es zu Verzögerungen kommen. Das Skript wartet automatisch und wiederholt.</li>
+      <li><strong>Modell nicht verfügbar:</strong> Google ändert gelegentlich Modellnamen. In <code>gemini_enrich.py</code> die Variable <code>GEMINI_MODEL</code> prüfen und ggf. anpassen. Aktuell: <code>gemini-3.1-flash-lite-preview</code></li>
     </ul>
   </li>
   <li>Der Monitor läuft auch ohne Gemini weiter – Einträge werden dann ungefiltert mit Originaltexten angezeigt</li>
@@ -230,7 +232,7 @@ wird bei signifikanten Fehlern eine Admin-Mail verschickt.</p>
 <p>Repository → Settings → Secrets and variables → Actions → folgende Secrets anlegen:</p>
 <ul>
   <li><code>LOBBYREGISTER_API_KEY</code> – Lobbyregister API-Key (öffentlich auf der Infoseite verfügbar)</li>
-  <li><code>GEMINI_API_KEY</code> – von <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> (kostenlos)</li>
+  <li><code>GEMINI_API_KEY</code> – von <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> (kostenlos, Account: lobbyregister.bot@gmail.com)</li>
   <li><code>RESEND_API_KEY</code> – von resend.com</li>
   <li><code>EMAIL_RECIPIENT</code> – Ziel-E-Mail-Adresse für die Wochenmail</li>
   <li><code>ADMIN_EMAIL</code> – Adresse für Fehlerbenachrichtigungen</li>
@@ -250,9 +252,9 @@ einfach diese Wartungsdokumentation als Kontext einfügen und um Unterstützung 
 API-Key generieren, Empfängeradresse verifizieren (unter „Audiences").</p>
 
 <h3>Schritt 7: Gemini API-Key</h3>
-<p>Google-Account erforderlich. Auf <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a>
+<p>Google-Account erforderlich (lobbyregister.bot@gmail.com oder neuer Account). Auf <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a>
 einen kostenlosen API-Key erstellen. Der Free Tier reicht für den Monitor aus
-(15 Requests/Minute, 1 Million Tokens/Tag).</p>
+(15 Requests/Minute, 500 Requests/Tag).</p>
 
 <h3>Schritt 8: URLs anpassen</h3>
 <p>In folgenden Dateien den GitHub-Nutzernamen anpassen:</p>

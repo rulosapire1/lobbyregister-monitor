@@ -591,9 +591,10 @@ def main():
     print(f"\nErgebnis: {len(all_statements)} Stellungnahmen gesamt "
           f"({len(new_statements)} neu, {len(previous_statements)} aus Cache)")
 
+    generated_at = datetime.now().isoformat()
+    
     # Speichern
     Path("docs").mkdir(exist_ok=True)
-    generated_at = datetime.now().isoformat()
 
 with open("docs/data.json", "w", encoding="utf-8") as f:
     json.dump({

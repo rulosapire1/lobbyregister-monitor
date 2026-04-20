@@ -4,35 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Lobbyregister-Monitor – BMWE</title>
+<title>Lobbyregister-Monitor</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #334155; background: #f8fafc; }
 a { color: #004B87; text-decoration: none; transition: color 0.2s; }
 a:hover { color: #003366; text-decoration: underline; }
 .page { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
-
 .site-header { background: #004B87; padding: 1rem 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
 .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; }
 .header-title { color: #fff; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
 .header-nav { display: flex; gap: 1.5rem; }
 .header-nav a { font-size: 0.875rem; color: #e2e8f0; font-weight: 500; }
 .header-nav a:hover { color: #fff; text-decoration: none; }
-
 .meta-bar { background: #fff; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; }
 .meta-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; }
-.update-badge { color: #64748b; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; }
+.update-badge { color: #64748b; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;}
 .update-badge::before { content: ''; display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; }
-
 .page-desc { background: #fff; padding: 1.5rem 0; border-bottom: 1px solid #e2e8f0; }
 .desc-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; color: #64748b; font-size: 0.9rem; line-height: 1.5; }
 .desc-line { margin-bottom: 0.25rem; }
-
 .layout { display: grid; grid-template-columns: 1fr 300px; gap: 2rem; align-items: start; padding-top: 1.5rem; }
-
 .sidebar { background: #fff; border-radius: 12px; padding: 1.5rem; position: sticky; top: 5.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
 .sidebar-title { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
-.sidebar-hint { font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; line-height: 1.4; }
+.sidebar-hint { font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; line-height: 1.4;}
 .filter-input { width: 100%; font-size: 0.875rem; padding: 0.6rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 1rem; outline: none; transition: border-color 0.2s; }
 .filter-input:focus { border-color: #004B87; }
 .filter-list { list-style: none; max-height: 50vh; overflow-y: auto; scrollbar-width: thin; }
@@ -43,40 +38,31 @@ a:hover { color: #003366; text-decoration: underline; }
 .filter-list li.active .filter-count { background: rgba(255,255,255,0.2); color: #fff; }
 .reset-btn { font-size: 0.875rem; color: #ef4444; background: none; border: none; padding: 0.6rem; margin-top: 1rem; cursor: pointer; font-weight: 600; width: 100%; border-radius: 6px; display: none; }
 .reset-btn:hover { background: #fef2f2; }
-
 .day-section { margin-bottom: 2.5rem; }
 .day-header { font-size: 0.875rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
-
 .entry-card { background: #fff; border-radius: 12px; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; }
 .entry-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-
 .row-title { padding: 1.25rem 1.5rem; font-size: 1.125rem; font-weight: 700; color: #0f172a; line-height: 1.4; border-left: 4px solid #004B87; background: #fff; }
 .meta-row { display: flex; flex-wrap: wrap; border-top: 1px solid #f1f5f9; background: #fafafa; }
 .meta-row.two-col { display: grid; grid-template-columns: 1fr 1fr; background: #fff; }
 .mc { padding: 0.85rem 1.5rem; font-size: 0.875rem; border-right: 1px solid #f1f5f9; }
 .mc:last-child { border-right: none; }
 .mc strong { display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
-
 .tag { display: inline-block; font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.6rem; margin: 0.15rem 0.25rem 0.15rem 0; background: #f1f5f9; color: #475569; border-radius: 9999px; border: 1px solid #e2e8f0; }
 .abadge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; margin: 0.15rem 0.25rem 0.15rem 0; background: #eff6ff; color: #1e40af; border-radius: 9999px; border: 1px solid #bfdbfe; }
-
 .row-full { padding: 1.25rem 1.5rem; font-size: 0.95rem; color: #334155; border-top: 1px solid #f1f5f9; line-height: 1.6; background: #fff; }
-.row-full b { background: #fef9c3; padding: 0.1rem 0.2rem; border-radius: 2px; color: #0f172a; }
 .row-label { display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
-
+.row-full b { background: #fef9c3; padding: 0.1rem 0.2rem; border-radius: 2px; color: #0f172a; font-size: inherit; text-transform: none; letter-spacing: normal; font-weight: 700; }
 .link-row { display: flex; border-top: 1px solid #f1f5f9; background: #f8fafc; }
 .lc { padding: 0.85rem 1.5rem; font-size: 0.875rem; font-weight: 500; border-right: 1px solid #f1f5f9; flex: 1; }
 .lc:last-child { border-right: none; }
-
 .pagination { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
 .page-btn { background: #fff; border: 1px solid #004B87; color: #004B87; padding: 0.6rem 1.2rem; font-size: 0.875rem; cursor: pointer; font-weight: 600; border-radius: 6px; transition: all 0.2s; }
 .page-btn:hover:not(:disabled) { background: #004B87; color: #fff; }
 .page-btn:disabled { border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; background: #f8fafc; }
 .page-info { font-size: 0.875rem; color: #475569; font-weight: 500; }
-
 .site-footer { background: #0f172a; color: #94a3b8; font-size: 0.875rem; padding: 2.5rem 0; margin-top: 4rem; border-top: 4px solid #004B87; }
 .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-
 @media(max-width:768px){
   .layout { grid-template-columns: 1fr; }
   .sidebar { position: static; margin-bottom: 2rem; }
@@ -86,23 +72,20 @@ a:hover { color: #003366; text-decoration: underline; }
 </style>
 </head>
 <body>
-
 <header class="site-header">
   <div class="header-inner">
-    <div class="header-title">Übersicht der Einträge im Lobbyregister</div>
+    <div class="header-title">Lobbyregister-Monitor</div>
     <nav class="header-nav">
       <a href="hilfe.html">Nutzungsanleitung</a>
     </nav>
   </div>
 </header>
-
 <div class="meta-bar">
   <div class="meta-inner">
     <div class="update-badge">Zuletzt aktualisiert: {{GENERATED_AT}}</div>
     <div class="meta-count">{{TOTAL_COUNT}} Einträge insgesamt (ab 1. Jan. 2026)</div>
   </div>
 </div>
-
 <div class="page-desc">
   <div class="desc-inner">
     <div class="desc-line">Stellungnahmen und Gutachten mit Adressat BMWE oder Bundestag</div>
@@ -111,211 +94,104 @@ a:hover { color: #003366; text-decoration: underline; }
     <div class="desc-line">Chronologisch absteigend sortiert, innerhalb eines Tages nach Themenrelevanz.</div>
   </div>
 </div>
-
 <div class="page">
-  <div class="layout">
-    <div class="main-content" id="main-content">
-      {{DAY_SECTIONS}}
-      <div class="pagination" id="pagination" style="display:none">
-        <button class="page-btn" id="prev-btn">← Zurück</button>
-        <span class="page-info" id="page-info"></span>
-        <button class="page-btn" id="next-btn">Weiter →</button>
-      </div>
-    </div>
-    <aside class="sidebar">
-      <div class="sidebar-title">Regelungsvorhaben</div>
-      <div class="sidebar-hint">Klicke auf ein Vorhaben, um nur dessen Stellungnahmen zu sehen.</div>
-      <input type="text" class="filter-input" id="filter-search" placeholder="Vorhaben suchen...">
-      <ul class="filter-list" id="filter-list">
-        {{FILTER_ITEMS}}
-      </ul>
-      <button class="reset-btn" id="reset-btn">Alle anzeigen ✕</button>
-    </aside>
-  </div>
+<div class="layout">
+<main id="entries">
+  {{DAY_SECTIONS}}
+  <div class="pagination" id="pagination"></div>
+</main>
+<aside class="sidebar">
+  <div class="sidebar-title">Regelungsvorhaben</div>
+  <div class="sidebar-hint">Klicken Sie auf ein Vorhaben, um nur die zugehörigen Einträge zu sehen.</div>
+  <input type="text" class="filter-input" id="filterSearch" placeholder="Vorhaben suchen…">
+  <ul class="filter-list" id="filterList">
+    {{FILTER_ITEMS}}
+  </ul>
+  <button class="reset-btn" id="resetFilter">Alle anzeigen ✕</button>
+</aside>
 </div>
-
+</div>
 <footer class="site-footer">
   <div class="footer-inner">
-    <div>Automatisch generiert · Daten: <a href="https://www.lobbyregister.bundestag.de" style="color:#93c5fd">Lobbyregister des Deutschen Bundestages</a></div>
-    <div>
-      Kontakt: Martin Jahn, IIIA4 ·
-      Wartungsdokumentation dort erfragen
-    </div>
+    <div>Daten: <a href="https://www.lobbyregister.bundestag.de" style="color:#e2e8f0">Lobbyregister des Deutschen Bundestages</a></div>
+    <div><a href="hilfe.html" style="color:#e2e8f0">Nutzungsanleitung</a> · <a href="impressum.html" style="color:#e2e8f0">Impressum</a></div>
   </div>
 </footer>
-
 <script>
 (function() {
-  // -- Pagination --
+  var entries = document.getElementById('entries');
+  var filterList = document.getElementById('filterList');
+  var filterSearch = document.getElementById('filterSearch');
+  var resetBtn = document.getElementById('resetFilter');
+  var paginationEl = document.getElementById('pagination');
+  var activeFilter = null;
+  var RECENT_DAYS = 7;
+  var ARCHIVE_BLOCK = 10;
   var currentPage = 0;
   var pages = [];
-  var filterActive = false;
-
   function buildPages() {
-    var sections = document.querySelectorAll('.day-section');
-    var today = new Date();
-    var cutoff = new Date(today);
-    cutoff.setDate(cutoff.getDate() - 7);
-    cutoff.setHours(0,0,0,0);
-
-    var recentSections = [];
-    var archiveSections = [];
-
-    sections.forEach(function(s) {
-      var ds = s.getAttribute('data-date');
-      if (!ds || ds === 'unbekannt') { recentSections.push(s); return; }
+    var sections = Array.from(entries.querySelectorAll('.day-section'));
+    if (!sections.length) { pages = []; return; }
+    var today = new Date(); today.setHours(0,0,0,0);
+    var cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - RECENT_DAYS);
+    var recentPage = [], archive = [];
+    sections.forEach(function(sec) {
+      var ds = sec.getAttribute('data-date');
+      if (!ds || ds === 'unbekannt') { archive.push(sec); return; }
       var d = new Date(ds + 'T00:00:00');
-      if (d >= cutoff) { recentSections.push(s); }
-      else { archiveSections.push(s); }
+      if (d >= cutoff) { recentPage.push(sec); } else { archive.push(sec); }
     });
-
-    pages = [];
-    if (recentSections.length > 0) pages.push(recentSections);
-
-    // Archiv: 10-Tage-Bloecke
-    if (archiveSections.length > 0) {
-      var block = [];
-      var blockStart = null;
-
-      for (var i = 0; i < archiveSections.length; i++) {
-        var ds = archiveSections[i].getAttribute('data-date');
-        var d = new Date(ds + 'T00:00:00');
-
-        if (blockStart === null) { blockStart = d; }
-
-        var diff = (blockStart - d) / (1000 * 60 * 60 * 24);
-        if (diff >= 10 && block.length > 0) {
-          pages.push(block);
-          block = [archiveSections[i]];
-          blockStart = d;
-        } else {
-          block.push(archiveSections[i]);
-        }
-      }
-      if (block.length > 0) pages.push(block);
-    }
-
-    if (pages.length === 0) {
-      // Fallback: alle Sections auf einer Seite
-      var all = Array.prototype.slice.call(sections);
-      if (all.length > 0) pages.push(all);
-    }
+    pages = [recentPage];
+    for (var i = 0; i < archive.length; i += ARCHIVE_BLOCK) { pages.push(archive.slice(i, i + ARCHIVE_BLOCK)); }
   }
-
   function showPage(idx) {
-    if (filterActive) return;
-    var sections = document.querySelectorAll('.day-section');
-    sections.forEach(function(s) { s.style.display = 'none'; });
-    if (pages[idx]) {
-      pages[idx].forEach(function(s) { s.style.display = ''; });
-    }
     currentPage = idx;
-    updatePagination();
+    entries.querySelectorAll('.day-section').forEach(function(s) { s.style.display = 'none'; });
+    if (pages[idx]) pages[idx].forEach(function(s) { s.style.display = ''; });
+    renderPagination();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
-  function updatePagination() {
-    var el = document.getElementById('pagination');
-    var prev = document.getElementById('prev-btn');
-    var next = document.getElementById('next-btn');
-    var info = document.getElementById('page-info');
-
-    if (filterActive || pages.length <= 1) {
-      el.style.display = 'none';
-      return;
-    }
-
-    el.style.display = 'flex';
-    prev.disabled = (currentPage === 0);
-    next.disabled = (currentPage === pages.length - 1);
-
-    if (currentPage === 0) {
-      info.textContent = 'Letzte 7 Tage \u00b7 Seite 1 von ' + pages.length;
-    } else {
-      info.textContent = 'Archiv \u00b7 Seite ' + (currentPage + 1) + ' von ' + pages.length;
-    }
+  function renderPagination() {
+    if (pages.length <= 1) { paginationEl.innerHTML = ''; return; }
+    var label = currentPage === 0 ? 'Aktuelle Woche' : 'Archiv ' + currentPage + ' / ' + (pages.length - 1);
+    paginationEl.innerHTML =
+      '<button class="page-btn" id="pgPrev"' + (currentPage === 0 ? ' disabled' : '') + '>\u2190 Neuere</button>' +
+      '<span class="page-info">' + label + '</span>' +
+      '<button class="page-btn" id="pgNext"' + (currentPage >= pages.length - 1 ? ' disabled' : '') + '>\u00c4ltere \u2192</button>';
+    var p = document.getElementById('pgPrev'), n = document.getElementById('pgNext');
+    if (p) p.onclick = function() { if (currentPage > 0) showPage(currentPage - 1); };
+    if (n) n.onclick = function() { if (currentPage < pages.length - 1) showPage(currentPage + 1); };
   }
-
-  document.getElementById('prev-btn').addEventListener('click', function() {
-    if (currentPage > 0) { showPage(currentPage - 1); window.scrollTo({top: 0, behavior: 'smooth'}); }
-  });
-  document.getElementById('next-btn').addEventListener('click', function() {
-    if (currentPage < pages.length - 1) { showPage(currentPage + 1); window.scrollTo({top: 0, behavior: 'smooth'}); }
-  });
-
-  // -- Filter --
-  var activeFilter = null;
-
-  function applyFilter(vorhaben) {
-    filterActive = true;
-    activeFilter = vorhaben;
-
-    // Alle Sections und Cards sichtbar machen
-    document.querySelectorAll('.day-section').forEach(function(s) { s.style.display = ''; });
-
-    // Karten filtern
-    document.querySelectorAll('.entry-card').forEach(function(c) {
-      var v = c.getAttribute('data-vorhaben');
-      c.style.display = (v === vorhaben) ? '' : 'none';
+  function applyFilter(v) {
+    activeFilter = v;
+    entries.querySelectorAll('.day-section').forEach(function(s) { s.style.display = ''; });
+    paginationEl.innerHTML = '';
+    entries.querySelectorAll('.entry-card').forEach(function(c) { c.style.display = c.getAttribute('data-vorhaben') === v ? '' : 'none'; });
+    entries.querySelectorAll('.day-section').forEach(function(sec) {
+      var vis = Array.from(sec.querySelectorAll('.entry-card')).some(function(c) { return c.style.display !== 'none'; });
+      sec.style.display = vis ? '' : 'none';
     });
-
-    // Leere Tage ausblenden
-    document.querySelectorAll('.day-section').forEach(function(s) {
-      var visible = s.querySelectorAll('.entry-card[style=""], .entry-card:not([style])');
-      var hasVisible = false;
-      s.querySelectorAll('.entry-card').forEach(function(c) {
-        if (c.style.display !== 'none') hasVisible = true;
-      });
-      s.style.display = hasVisible ? '' : 'none';
-    });
-
-    // Sidebar aktualisieren
-    document.querySelectorAll('#filter-list li').forEach(function(li) {
-      li.classList.toggle('active', li.getAttribute('data-v') === vorhaben);
-    });
-    document.getElementById('reset-btn').style.display = 'block';
-    document.getElementById('pagination').style.display = 'none';
+    filterList.querySelectorAll('li').forEach(function(li) { li.classList.toggle('active', li.getAttribute('data-v') === v); });
+    resetBtn.style.display = 'block';
   }
-
-  function resetFilter() {
-    filterActive = false;
+  function clearFilter() {
     activeFilter = null;
-
-    document.querySelectorAll('.entry-card').forEach(function(c) { c.style.display = ''; });
-    document.querySelectorAll('#filter-list li').forEach(function(li) { li.classList.remove('active'); });
-    document.getElementById('reset-btn').style.display = 'none';
-    document.getElementById('filter-search').value = '';
-    filterList('');
-
+    entries.querySelectorAll('.entry-card').forEach(function(c) { c.style.display = ''; });
+    filterList.querySelectorAll('li').forEach(function(li) { li.classList.remove('active'); });
+    resetBtn.style.display = 'none';
     showPage(0);
   }
-
-  // Sidebar-Klick
-  document.getElementById('filter-list').addEventListener('click', function(e) {
-    var li = e.target.closest('li');
-    if (!li) return;
+  filterList.addEventListener('click', function(e) {
+    var li = e.target.closest('li'); if (!li) return;
     var v = li.getAttribute('data-v');
-    if (activeFilter === v) { resetFilter(); }
-    else { applyFilter(v); }
+    if (activeFilter === v) clearFilter(); else applyFilter(v);
   });
-
-  document.getElementById('reset-btn').addEventListener('click', resetFilter);
-
-  // Suchfeld
-  document.getElementById('filter-search').addEventListener('input', function() {
-    filterList(this.value);
+  resetBtn.addEventListener('click', clearFilter);
+  filterSearch.addEventListener('input', function() {
+    var q = this.value.toLowerCase();
+    filterList.querySelectorAll('li').forEach(function(li) { li.style.display = li.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none'; });
   });
-
-  function filterList(query) {
-    var q = query.toLowerCase();
-    document.querySelectorAll('#filter-list li').forEach(function(li) {
-      var text = li.querySelector('span').textContent.toLowerCase();
-      li.style.display = text.includes(q) ? '' : 'none';
-    });
-  }
-
-  // -- Init --
-  buildPages();
-  showPage(0);
+  buildPages(); showPage(0);
 })();
 </script>
 </body>

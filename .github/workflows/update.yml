@@ -33,21 +33,27 @@ jobs:
       - name: Abhängigkeiten installieren
         run: pip install requests
 
+      - name: Gemini-Cache wiederherstellen
+        uses: actions/cache@v4
+        with:
+          path: docs/gemini_cache.json
+          # Fester Key mit Restore-Key: Cache wird bei jedem Run überschrieben
+          key: gemini-cache-${{ github.run_id }}
+          restore-keys: |
+            gemini-cache-
+
       - name: Daten abrufen und Seite generieren
         env:
           LOBBYREGISTER_API_KEY: ${{ secrets.LOBBYREGISTER_API_KEY }}
         run: python scripts/fetch_and_build.py
 
-      - name: Gemini-Anreicherung (Relevanzfilter + Zusammenfassungen)
+      - name: Gemini-Anreicherung (Relevanzfilter + Zusammenfassungen + HTML-Rebuild)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
         run: python scripts/gemini_enrich.py
         continue-on-error: true
-
-      - name: HTML mit angereicherten Daten neu generieren
-        run: python scripts/rebuild_html.py
 
       - name: data.json für Mail-Job speichern
         uses: actions/upload-artifact@v4

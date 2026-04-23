@@ -65,6 +65,11 @@ jobs:
         run: python scripts/gemini_enrich.py
         continue-on-error: true
 
+      - name: Admin-Panel Passwort-Hash einfuegen
+        env:
+          ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+        run: python scripts/inject_admin_hash.py
+
       - name: Workflow-Protokoll speichern
         run: python scripts/save_run_log.py
         continue-on-error: true

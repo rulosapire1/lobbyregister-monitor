@@ -3,17 +3,7 @@ fetch_and_build.py
 ==================
 Ruft Stellungnahmen ueber die offizielle Lobbyregister API V2 ab.
 
-INKREMENTELLER ABRUF:
-- Laedt vorherige data.json (aus GitHub Actions Cache)
-- Holt nur Registereintraege, die noch nicht verarbeitet wurden
-- Merged neue Eintraege mit bestehenden Daten
-- Vollstaendiger Neuabruf nur beim ersten Lauf oder bei leerem Cache
-
-Strategie:
-1. Alle Registernummern per /registerentries laden (schnell, nur Liste)
-2. Nur NEUE Registernummern einzeln abrufen und filtern
-3. Vorherige + neue Stellungnahmen zusammenfuehren
-4. HTML-Seite rendern
+INKREMENTELLER ABRUF + BERLINER ZEITZONE FÜR TIMESTAMPS
 """
 
 import json
@@ -23,6 +13,7 @@ import requests
 from datetime import datetime, date
 from collections import defaultdict
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
 
@@ -31,6 +22,7 @@ API_KEY = os.environ.get("LOBBYREGISTER_API_KEY", "")
 
 SITE_URL = "https://lobbyregister-bot.de"
 START_DATE = date(2026, 1, 1)
+BERLIN_TZ = ZoneInfo("Europe/Berlin")
 
 TARGET_DEPT_KEYWORDS = ["BMWE", "BMWK", "Wirtschaft", "BKAmt", "Kanzleramt", "BMUKN", "BMUV", "Umwelt", "BMF", "Finanzen"]
 
@@ -530,7 +522,8 @@ def generate_html(statements, generated_at):
         for v, c in sorted(vorhaben_counts.items(), key=lambda x: -x[1])
     )
 
-    gen_dt = datetime.fromisoformat(generated_at)
+    # BERLINER ZEIT für den Timestamp!
+    gen_dt = datetime.fromisoformat(generated_at).astimezone(BERLIN_TZ)
     months_de = ["", "Januar", "Februar", "M\u00e4rz", "April", "Mai", "Juni",
                  "Juli", "August", "September", "Oktober", "November", "Dezember"]
     gen_str = f"{gen_dt.day}. {months_de[gen_dt.month]} {gen_dt.year}, {gen_dt.strftime('%H:%M')} Uhr"
@@ -584,14 +577,15 @@ def main():
     # Merge: vorherige + neue, mit Deduplizierung
     all_statements = merge_statements(previous_statements, new_statements)
     all_statements.sort(
-    key=lambda x: (x.get("upload_date") or x.get("sending_date") or "0000-00-00"),
-    reverse=True
-)
+        key=lambda x: (x.get("upload_date") or x.get("sending_date") or "0000-00-00"),
+        reverse=True
+    )
 
     print(f"\nErgebnis: {len(all_statements)} Stellungnahmen gesamt "
           f"({len(new_statements)} neu, {len(previous_statements)} aus Cache)")
 
-    generated_at = datetime.now().isoformat()
+    # BERLINER ZEIT für generated_at
+    generated_at = datetime.now(BERLIN_TZ).isoformat()
     
     # Speichern
     Path("docs").mkdir(exist_ok=True)

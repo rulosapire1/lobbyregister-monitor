@@ -161,10 +161,9 @@ async function hashPassword(password) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Gespeicherter Hash des Passworts (HIER ÄNDERN!)
-// Aktuell: "monitor2026"
-// Neues Passwort setzen: Browser-Console → await hashPassword("deinPasswort")
-const CORRECT_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+// Passwort-Hash wird von GitHub Actions beim Build eingefügt
+// Setze GitHub Secret: ADMIN_PASSWORD_HASH
+const CORRECT_HASH = '{{ADMIN_PASSWORD_HASH}}';
 
 // ── Login-Handling ─────────────────────────────────────────────────────────────
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
